@@ -1,0 +1,50 @@
+export type SearchResult = {
+  title: string
+  link: string
+  imageUrl?: string
+  m2: number
+  price: number
+  pricePerM2: number
+  location: string
+  adaNo?: string
+  parselNo?: string
+  il: string
+  ilce: string
+  telefonNo?: string
+  isim?: string
+  sirket?: string
+  kimden: string
+}
+
+export type Search = {
+  description?: string
+  date: number // Unix timestamp olarak zorunlu hale getirildi
+  results: SearchResult[] // 'search' yerine 'results' olarak adlandırıldı
+}
+
+export type SearchSummary = {
+  description?: string
+  date: number // Unix timestamp
+}
+
+export type NoteInfo = {
+  title: string
+  lastEditTime: number
+}
+export type NoteContent = string
+
+export type Settings = {
+  macAddress: string
+  licanceKey?: string
+  autoResolver: boolean
+  scraperTimeout: number[]
+  captchaTimeout: number[]
+  fingerprints: boolean
+  headless: boolean
+  proxy?: {
+    host: string
+    port: number
+    username: string
+    password: string
+  }
+}

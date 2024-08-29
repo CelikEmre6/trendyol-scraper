@@ -1,0 +1,7 @@
+{
+  "autoResolver": true,
+  "scraperTimeout": [1500, 2500],
+  "captchaTimeout": [1000, 2000],
+  "fingerprints": true,
+  "headless": true
+}
