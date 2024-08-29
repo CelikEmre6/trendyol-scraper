@@ -1,4 +1,4 @@
-export const appDirectoryName = 'sari-site'
+export const appDirectoryName = 'sahibinden'
 export const fileEncoding = 'utf8'
 
 export const autoSavingTime = 3000

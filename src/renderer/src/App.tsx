@@ -14,7 +14,7 @@ function App(): JSX.Element {
       <RootLayout>
         <Content
           ref={contentContainerRef}
-          className="border-l bg-zinc-900/50 border-l-white/20"
+          className="border-l bg-[#2d2d2d] border-l-white/20"
         ></Content>
       </RootLayout>
     </>

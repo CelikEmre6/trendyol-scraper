@@ -19,9 +19,7 @@ const checkStat = async ({ page }: { page: Page }): Promise<boolean> => {
       const textSelector = await page.evaluate(() => {
         const elements = [...document.querySelectorAll('body *')]
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        return elements.find((element: any) =>
-          element.innerText.includes('Aşağıdaki işlemi tamamlayarak insan olduğunuzu doğrulayın.')
-        )
+        return elements.find((element: any) => element.innerText.includes('secure.sahibinden.com'))
       })
 
       if (textSelector) {

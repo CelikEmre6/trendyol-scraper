@@ -43,10 +43,9 @@ function createWindow(): void {
     autoHideMenuBar: true,
     ...(process.platform === 'linux' ? { icon } : {}),
     center: true,
-    title: 'Electron Toolkit',
+    title: 'Sahibinden Veri Çekme',
     frame: true,
     vibrancy: 'under-window',
-    titleBarStyle: 'hidden',
     trafficLightPosition: {
       x: 15,
       y: 10

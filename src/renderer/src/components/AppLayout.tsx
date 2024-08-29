@@ -38,7 +38,7 @@ const items: TabsProps['items'] = [
     key: '1',
     label: 'Arama Yap',
     children: (
-      <div className="w-full flex justify-center items-center h-[calc(100vh-74px)]">
+      <div className="w-full flex justify-center items-center h-[calc(100vh-42px)]">
         <Search />
       </div>
     )
@@ -47,7 +47,7 @@ const items: TabsProps['items'] = [
     key: '2',
     label: 'Geçmiş Aramalar',
     children: (
-      <div className="w-full flex justify-start items-start h-[calc(100vh-74px)]">
+      <div className="w-full flex justify-start items-start h-[calc(100vh-42px)]">
         <Sidebar>
           <NotePreviewList />
         </Sidebar>
@@ -59,7 +59,7 @@ const items: TabsProps['items'] = [
     key: '3',
     label: 'Ayarlar',
     children: (
-      <div className="w-full flex justify-start items-start h-[calc(100vh-74px)] px-8 pt-8">
+      <div className="w-full flex justify-start items-start h-[calc(100vh-42px)] px-8 pt-8">
         <Settings />
       </div>
     )
@@ -138,7 +138,7 @@ export const Content = forwardRef<HTMLDivElement, ComponentProps<'div'>>(
 
     if (!settings?.licanceKey) {
       return (
-        <div className="w-full flex justify-center items-center h-[calc(100vh)] flex-col">
+        <div className="w-full flex justify-center items-center h-[calc(100vh)] flex-col bg-[#2d2d2d]">
           <p>
             <strong>Lütfen Lisans Anahtarını Giriniz!</strong>
           </p>
@@ -161,7 +161,7 @@ export const Content = forwardRef<HTMLDivElement, ComponentProps<'div'>>(
 
     if (loading) {
       return (
-        <div className="w-full flex justify-center items-center h-[calc(100vh)]">
+        <div className="w-full flex justify-center items-center h-[calc(100vh)] bg-[#2d2d2d]">
           <Triangle
             visible={true}
             height="80"
@@ -201,11 +201,7 @@ export const Content = forwardRef<HTMLDivElement, ComponentProps<'div'>>(
           }
         }}
       >
-        <div
-          ref={ref}
-          className={twMerge('flex-1 h-full overflow-auto pt-8', className)}
-          {...props}
-        >
+        <div ref={ref} className={twMerge('flex-1 h-full overflow-auto', className)} {...props}>
           <Tabs
             onChange={onChange}
             type="card"
