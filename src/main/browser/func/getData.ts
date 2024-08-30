@@ -131,10 +131,12 @@ export const getData = async (url: string) => {
 
               detailItems.forEach((item) => {
                 if (item.innerText.includes('Ada No')) {
-                  adaNo = item.querySelector('span')?.innerText.trim() || 'Belirtilmemiş'
+                  adaNo =
+                    item.querySelector('span')?.innerText.trim().replace('.', '') || 'Belirtilmemiş'
                 }
                 if (item.innerText.includes('Parsel No')) {
-                  parselNo = item.querySelector('span')?.innerText.trim() || 'Belirtilmemiş'
+                  parselNo =
+                    item.querySelector('span')?.innerText.trim().replace('.', '') || 'Belirtilmemiş'
                 }
                 if (item.innerText.includes('Kimden')) {
                   kimden = item.querySelector('span')?.innerText.trim() || 'Belirtilmemiş'

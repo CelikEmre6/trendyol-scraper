@@ -124,7 +124,7 @@ export const Search = () => {
         </Button>
       )}
       <Select
-        placeholder="Basic usage"
+        placeholder="İl"
         options={cities}
         loading={cities.length === 0 && captchaSolved}
         disabled={cities.length === 0}
@@ -145,7 +145,7 @@ export const Search = () => {
         value={selectedCity}
       />
       <Select
-        placeholder="Basic usage"
+        placeholder="İlçe"
         className="w-96"
         options={towns}
         disabled={!selectedCity}
@@ -179,7 +179,7 @@ export const Search = () => {
         disabled={!selectedTown}
         loading={districts.length === 0 && selectedTown !== null}
         className="w-96"
-        placeholder="Basic usage"
+        placeholder="Mahalle/Köy"
         treeData={districts}
         onChange={(value) => {
           setSelectedDistrict(value)

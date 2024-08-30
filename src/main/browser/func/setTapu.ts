@@ -152,7 +152,7 @@ const waitOptions = async function (page: any, myselector: string) {
       const selectElement = document.querySelector(selector) as HTMLSelectElement
       return selectElement && selectElement.options && selectElement.options.length > 1
     },
-    { timeout: 2000 },
+    { timeout: 4000 },
     myselector
   )
 }
