@@ -2,9 +2,9 @@ export type SearchResult = {
   title: string
   link: string
   imageUrl?: string
-  m2: number
-  price: number
-  pricePerM2: number
+  m2: string
+  price: string
+  pricePerM2: string
   location: string
   adaNo?: string
   parselNo?: string

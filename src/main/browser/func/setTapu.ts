@@ -103,9 +103,9 @@ export const setTapu = async (results: SearchResult[]) => {
             result.adaNo +
             '-' +
             result.parselNo +
-            '<br>m2: ' +
+            ' | m2: ' +
             result.m2 +
-            ' m2 Fiyat: ' +
+            '<br>m2 Fiyat: ' +
             result.pricePerM2 +
             '<br>Fiyat: ' +
             result.price
@@ -135,7 +135,17 @@ const selectOptionByPartialText = async function (page: any, selector: string, t
   const value = await page.evaluate(
     (selector, text) => {
       const options = Array.from(document.querySelector(selector).options)
-      const option = options.find((option: any) => option.textContent.toLowerCase().includes(text))
+      const option = options.find((option: any) => {
+        return (
+          option.textContent
+            .trim()
+            .toLocaleLowerCase('tr-TR')
+            .includes(text.toLocaleLowerCase('tr-TR')) ||
+          text
+            .toLocaleLowerCase('tr-TR')
+            .includes(option.textContent.trim().toLocaleLowerCase('tr-TR'))
+        )
+      })
       return option ? (option as any).value : null
     },
     selector,

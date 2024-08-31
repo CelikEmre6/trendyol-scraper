@@ -337,21 +337,21 @@ export const importFromExcel: ImportFromExcel = async (filePath, desc) => {
     if (rowNumber === 1) return // Başlıkları atla
 
     const rowData = {
-      title: row.getCell('A').value,
-      link: row.getCell('B').value,
-      imageUrl: row.getCell('C').value,
-      m2: row.getCell('D').value,
-      price: row.getCell('E').value,
-      pricePerM2: row.getCell('F').value,
-      il: row.getCell('G').value,
-      ilce: row.getCell('H').value,
-      location: row.getCell('I').value,
-      adaNo: row.getCell('J').value,
-      parselNo: row.getCell('K').value,
-      kimden: row.getCell('L').value,
-      telefonNo: row.getCell('M').value,
-      isim: row.getCell('N').value,
-      sirket: row.getCell('O').value
+      title: row.getCell('A').value?.toString(),
+      link: row.getCell('B').value?.toString(),
+      imageUrl: row.getCell('C').value?.toString(),
+      m2: row.getCell('D').value?.toString(),
+      price: row.getCell('E').value?.toString(),
+      pricePerM2: row.getCell('F').value?.toString(),
+      il: row.getCell('G').value?.toString(),
+      ilce: row.getCell('H').value?.toString(),
+      location: row.getCell('I').value?.toString(),
+      adaNo: row.getCell('J').value?.toString(),
+      parselNo: row.getCell('K').value?.toString(),
+      kimden: row.getCell('L').value?.toString(),
+      telefonNo: row.getCell('M').value?.toString(),
+      isim: row.getCell('N').value?.toString(),
+      sirket: row.getCell('O').value?.toString()
     }
 
     data.push(rowData as SearchResult)

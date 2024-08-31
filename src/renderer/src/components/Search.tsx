@@ -131,6 +131,7 @@ export const Search = () => {
         className="w-96"
         onSelect={(value) => {
           setSelectedCity(value)
+          setSelectedTown(null)
           setSearchDescription((cities.find((city: any) => city.value === value) as any)?.label)
           getTownsByCityId(value!).then((towns) => {
             setTowns(
@@ -151,9 +152,10 @@ export const Search = () => {
         disabled={!selectedCity}
         loading={towns.length === 0 && selectedCity !== null}
         onSelect={(value) => {
+          setSelectedDistrict([])
           setSelectedTown(value)
           setSearchDescription(
-            searchDescription +
+            searchDescription.split(' - ')[0] +
               ' - ' +
               (towns.find((town: any) => town.value === value) as any)?.label
           )

@@ -49,7 +49,7 @@ export const getData = async (url: string) => {
 
           const m2Text =
             (row.querySelector('td.searchResultsAttributeValue') as any)?.innerText.trim() || null
-          const m2 = m2Text ? parseInt(m2Text.replace(/\./g, '')) : null
+          const m2 = m2Text ? m2Text : null
 
           const priceText =
             (
@@ -57,13 +57,11 @@ export const getData = async (url: string) => {
                 'td.searchResultsPriceValue .classified-price-container span'
               ) as any
             )?.innerText.trim() || null
-          const price = priceText ? parseInt(priceText.replace(/\./g, '').replace(' TL', '')) : null
+          const price = priceText ? priceText : null
 
           const pricePerM2Text =
             (row.querySelectorAll('td.searchResultsPriceValue')[1] as any)?.innerText.trim() || null
-          const pricePerM2 = pricePerM2Text
-            ? parseInt(pricePerM2Text.replace(/\./g, '').replace(' TL/m²', ''))
-            : null
+          const pricePerM2 = pricePerM2Text ? pricePerM2Text : null
 
           const dateElement = row.querySelector('td.searchResultsDateValue.true')
           const day = dateElement?.querySelector('span')?.innerText.trim() || null
@@ -97,6 +95,8 @@ export const getData = async (url: string) => {
               waitUntil: 'domcontentloaded'
             })
 
+            await delay(500)
+
             const pageNotFound = await page.evaluate(() => {
               return document.body.innerText.includes('Aradığınız sayfa artık bulunamıyor.')
             })
@@ -117,7 +117,7 @@ export const getData = async (url: string) => {
             }
 
             await page.waitForSelector('.classifiedDetailTitle', {
-              timeout: 60000
+              timeout: 10000
             })
 
             const details = await page.evaluate(() => {
