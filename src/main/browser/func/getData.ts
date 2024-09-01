@@ -86,7 +86,6 @@ export const getData = async (url: string) => {
 
         return results
       })
-
       for (const item of data) {
         if (item.link) {
           try {
@@ -95,14 +94,17 @@ export const getData = async (url: string) => {
               waitUntil: 'domcontentloaded'
             })
 
-            await delay(500)
+            await delay(1250)
 
             const pageNotFound = await page.evaluate(() => {
               return document.body.innerText.includes('Aradığınız sayfa artık bulunamıyor.')
             })
 
             const forceLogin = await page.evaluate(() => {
-              return document.body.innerText.includes('giriş yapmanız gerekmektedir')
+              return (
+                document.body.innerText.includes('giriş yapmanız gerekmektedir') ||
+                document.body.innerText.includes('you need to log in')
+              )
             })
 
             if (pageNotFound) {
@@ -128,6 +130,7 @@ export const getData = async (url: string) => {
               let telefonNo = 'Belirtilmemiş'
               let isim = 'Belirtilmemiş'
               let sirket = 'Belirtilmemiş'
+              let imar = 'Belirtilmemiş'
 
               detailItems.forEach((item) => {
                 if (item.innerText.includes('Ada No')) {
@@ -140,6 +143,9 @@ export const getData = async (url: string) => {
                 }
                 if (item.innerText.includes('Kimden')) {
                   kimden = item.querySelector('span')?.innerText.trim() || 'Belirtilmemiş'
+                }
+                if (item.innerText.includes('İmar Durumu')) {
+                  imar = item.querySelector('span')?.innerText.trim() || 'Belirtilmemiş'
                 }
               })
 
@@ -179,7 +185,8 @@ export const getData = async (url: string) => {
                 kimden,
                 telefonNo,
                 isim,
-                sirket
+                sirket,
+                imar
               }
             })
 
@@ -189,6 +196,7 @@ export const getData = async (url: string) => {
             item.telefonNo = details.telefonNo
             item.isim = details.isim
             item.sirket = details.sirket
+            item.imar = details.imar
 
             await delay(Math.floor(Math.random() * 1000) + 2000)
           } catch (error) {

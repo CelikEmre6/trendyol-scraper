@@ -219,11 +219,14 @@ export const saveSearch: SaveSearch = async ({ results, date, description }) => 
   const filePath = `${getRootDir()}/${date}.json`
 
   try {
+    const uniqueResults = results.filter(
+      (result, index, self) => index === self.findIndex((r) => r.link === result.link)
+    )
     await writeFile(
       filePath,
       JSON.stringify(
         {
-          results,
+          results: uniqueResults,
           date,
           description
         },
@@ -303,6 +306,7 @@ export const createExcelFile: SaveSearch = async (jsonData) => {
     { header: 'Ada No', key: 'adaNo', width: 10 },
     { header: 'Parsel No', key: 'parselNo', width: 10 },
     { header: 'Kimden', key: 'kimden', width: 20 },
+    { header: 'İmar Durumu', key: 'imar', width: 20 },
     { header: 'Telefon No', key: 'telefonNo', width: 20 },
     { header: 'İsim', key: 'isim', width: 20 },
     { header: 'Şirket', key: 'sirket', width: 30 }
@@ -321,46 +325,57 @@ export const createExcelFile: SaveSearch = async (jsonData) => {
 }
 
 export const importFromExcel: ImportFromExcel = async (filePath, desc) => {
-  console.log('desc', desc)
-  const rootDir = getRootDir()
+  try {
+    console.log('desc', desc)
+    const rootDir = getRootDir()
 
-  const workbook = new ExcelJS.Workbook()
+    const workbook = new ExcelJS.Workbook()
 
-  // Excel dosyasını yükle
-  await workbook.xlsx.readFile(`${rootDir}/${filePath}.xlsx`)
+    // Excel dosyasını yükle
+    await workbook.xlsx.readFile(`${rootDir}/${filePath}.xlsx`)
 
-  const worksheet = workbook.getWorksheet(1) // İlk sayfayı al
-  const data: SearchResult[] = []
-
-  // İlk satırda başlıklar olduğu için ikinci satırdan itibaren okumaya başla
-  worksheet?.eachRow({ includeEmpty: true }, (row, rowNumber) => {
-    if (rowNumber === 1) return // Başlıkları atla
-
-    const rowData = {
-      title: row.getCell('A').value?.toString(),
-      link: row.getCell('B').value?.toString(),
-      imageUrl: row.getCell('C').value?.toString(),
-      m2: row.getCell('D').value?.toString(),
-      price: row.getCell('E').value?.toString(),
-      pricePerM2: row.getCell('F').value?.toString(),
-      il: row.getCell('G').value?.toString(),
-      ilce: row.getCell('H').value?.toString(),
-      location: row.getCell('I').value?.toString(),
-      adaNo: row.getCell('J').value?.toString(),
-      parselNo: row.getCell('K').value?.toString(),
-      kimden: row.getCell('L').value?.toString(),
-      telefonNo: row.getCell('M').value?.toString(),
-      isim: row.getCell('N').value?.toString(),
-      sirket: row.getCell('O').value?.toString()
+    const worksheet = workbook.getWorksheet(1) // İlk sayfayı al
+    if (!worksheet) {
+      throw new Error('Worksheet bulunamadı.')
     }
 
-    data.push(rowData as SearchResult)
-  })
+    const data: SearchResult[] = []
 
-  saveSearch({
-    results: data,
-    date: parseInt(filePath),
-    description: desc
-  })
-  return data
+    // İlk satırda başlıklar olduğu için ikinci satırdan itibaren okumaya başla
+    worksheet.eachRow({ includeEmpty: true }, (row, rowNumber) => {
+      if (rowNumber === 1) return // Başlıkları atla
+
+      const rowData = {
+        title: row.getCell('A').value?.toString(),
+        link: row.getCell('B').value?.toString(),
+        imageUrl: row.getCell('C').value?.toString(),
+        m2: row.getCell('D').value?.toString(),
+        price: row.getCell('E').value?.toString(),
+        pricePerM2: row.getCell('F').value?.toString(),
+        il: row.getCell('G').value?.toString(),
+        ilce: row.getCell('H').value?.toString(),
+        location: row.getCell('I').value?.toString(),
+        adaNo: row.getCell('J').value?.toString(),
+        parselNo: row.getCell('K').value?.toString(),
+        kimden: row.getCell('L').value?.toString(),
+        imar: row.getCell('M').value?.toString(),
+        telefonNo: row.getCell('N').value?.toString(),
+        isim: row.getCell('O').value?.toString(),
+        sirket: row.getCell('P').value?.toString()
+      }
+
+      data.push(rowData as SearchResult)
+    })
+
+    saveSearch({
+      results: data,
+      date: parseInt(filePath),
+      description: desc
+    })
+
+    return data
+  } catch (error) {
+    console.error('Excel dosyası işlenirken bir hata oluştu:', error)
+    throw error // Hata fırlatmak istersen
+  }
 }

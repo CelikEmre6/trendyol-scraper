@@ -14,6 +14,7 @@ export type SearchResult = {
   isim?: string
   sirket?: string
   kimden: string
+  imar?: string
 }
 
 export type Search = {

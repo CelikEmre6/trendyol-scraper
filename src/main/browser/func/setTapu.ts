@@ -142,6 +142,7 @@ const selectOptionByPartialText = async function (page: any, selector: string, t
             .toLocaleLowerCase('tr-TR')
             .includes(text.toLocaleLowerCase('tr-TR')) ||
           text
+            .split(' ')[0]
             .toLocaleLowerCase('tr-TR')
             .includes(option.textContent.trim().toLocaleLowerCase('tr-TR'))
         )
