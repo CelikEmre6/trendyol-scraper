@@ -137,13 +137,8 @@ const selectOptionByPartialText = async function (page: any, selector: string, t
       const options = Array.from(document.querySelector(selector).options)
       const option = options.find((option: any) => {
         return (
-          option.textContent
-            .trim()
-            .toLocaleLowerCase('tr-TR')
-            .includes(text.split(' ')[0].toLocaleLowerCase('tr-TR')) ||
-          text
-            .toLocaleLowerCase('tr-TR')
-            .includes(option.textContent.trim().split(' ')[0].toLocaleLowerCase('tr-TR'))
+          option.textContent.trim().split(' ')[0].toLocaleLowerCase('tr-TR') ==
+          text.split(' ')[0].toLocaleLowerCase('tr-TR')
         )
       })
       return option ? (option as any).value : null
