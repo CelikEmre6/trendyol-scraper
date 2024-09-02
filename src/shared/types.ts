@@ -8,7 +8,8 @@ export type DeleteNote = (title: NoteInfo['title']) => Promise<boolean>
 export type SearchResults = (
   city: string,
   town: string,
-  quarters: string[]
+  quarters: string[],
+  zonings: string[]
 ) => Promise<SearchResult[]>
 export type GetSettingsJson = () => Promise<Settings>
 export type SetSettingsJson = (settings: Settings) => Promise<Settings>

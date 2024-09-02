@@ -142,13 +142,18 @@ export const solveCaptcha: () => Promise<void> = async () => {
   await testFunc()
 }
 
-export const getSearchResults: SearchResults = async (city, town, quarters) => {
+export const getSearchResults: SearchResults = async (city, town, quarters, zonings) => {
+  let searchString = ''
   const quartesString = quarters.map((quarter) => `address_quarter=${quarter}`).join('&')
-
-  const searchString = `https://www.sahibinden.com/satilik-arsa?pagingSize=50&${quartesString}&address_town=${town}&query_text_mf=sat%C4%B1l%C4%B1k+arsa&address_city=${city}`
+  if (zonings.length == 0) {
+    searchString = `https://www.sahibinden.com/satilik-arsa?pagingSize=50&${quartesString}&address_town=${town}&query_text_mf=sat%C4%B1l%C4%B1k+arsa&address_city=${city}`
+  } else {
+    const zoningsString = zonings.map((zoning) => `a3790=${zoning}`).join('&')
+    searchString = `https://www.sahibinden.com/satilik-arsa?pagingSize=50&${quartesString}&${zoningsString}&address_town=${town}&query_text_mf=sat%C4%B1l%C4%B1k+arsa&address_city=${city}`
+  }
+  //const searchString = `https://www.sahibinden.com/satilik-arsa?pagingSize=50&${quartesString}&address_town=${town}&query_text_mf=sat%C4%B1l%C4%B1k+arsa&address_city=${city}`
 
   const data = await getData(searchString)
-
   return data
 }
 

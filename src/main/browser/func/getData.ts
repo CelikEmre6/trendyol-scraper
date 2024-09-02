@@ -35,6 +35,14 @@ export const getData = async (url: string) => {
         timeout: 60000
       })
 
+      const advertNotFound = await page.evaluate(() => {
+        return document.body.innerText.includes('Arama filtrelerine uygun ilan bulunamadı.')
+      })
+      if (advertNotFound) {
+        console.log('ilan bulunumadı')
+        break
+      }
+
       const data = await page.evaluate(() => {
         const rows = document.querySelectorAll('tr.searchResultsItem')
         const results: any[] = []

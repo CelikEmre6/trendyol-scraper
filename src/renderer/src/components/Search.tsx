@@ -5,10 +5,48 @@ import { useSetAtom } from 'jotai'
 import { useEffect, useState } from 'react'
 import { LuRefreshCw } from 'react-icons/lu'
 
+const Zonings = [
+  { name: 'Ada', value: '70779' },
+  { name: 'A Lejantlı', value: '97231' },
+  { name: 'Arazi', value: '1210730' },
+  { name: 'Bağ Bahce', value: '70778' },
+  { name: 'Depo Antrepo', value: '70780' },
+  { name: 'Eğitim', value: '70787' },
+  { name: 'Enerji Depolama', value: '1116194' },
+  { name: 'Konut', value: '70782' },
+  { name: 'Muhtelif', value: '70786' },
+  { name: 'Özel Kullanım', value: '70789' },
+  { name: 'Sağlık', value: '70781' },
+  { name: 'Sanayi', value: '70783' },
+  { name: 'Sera', value: '1138378' },
+  { name: 'Sit Alanı', value: '70788' },
+  { name: 'Spor Alanı', value: '113936' },
+  { name: 'Tarla', value: '70790' },
+  { name: 'Tarla + Bağ', value: '1263150' },
+  { name: 'Ticari', value: '70784' },
+  { name: 'Ticari + Konut', value: '824988' },
+  { name: 'Toplu Konut', value: '70791' },
+  { name: 'Turizm', value: '70792' },
+  { name: 'Turizm + Konut', value: '1239902' },
+  { name: 'Turizm + Ticari', value: '1252713' },
+  { name: 'Villa', value: '97232' },
+  { name: 'Zeytinlik', value: '1129624' }
+]
+
+const treeDataZoning = Zonings.map((zoning) => ({
+  title: zoning.name,
+  value: zoning.value,
+  key: zoning.value // Key genellikle benzersiz bir değer olmalıdır
+}))
+
 function getUniqueSecondParts(arr): string[] {
   const secondParts = arr.map((item) => item.split('-')[1]) // İkinci kısmı al
   const uniqueSecondParts = [...new Set(secondParts)] // Benzersiz değerleri filtrele
   return uniqueSecondParts as string[]
+}
+function getUniqueZonings(arr): string[] {
+  const uniqueZonings = [...new Set(arr)]
+  return uniqueZonings as string[]
 }
 
 export const Search = () => {
@@ -21,6 +59,7 @@ export const Search = () => {
   const [selectedCity, setSelectedCity] = useState(null)
   const [selectedTown, setSelectedTown] = useState(null)
   const [selectedDistrict, setSelectedDistrict] = useState([])
+  const [selectedZoning, setSelectedZoning] = useState([])
 
   const [searchDescription, setSearchDescription] = useState('')
 
@@ -101,6 +140,7 @@ export const Search = () => {
     setSelectedCity(null)
     setSelectedTown(null)
     setSelectedDistrict([])
+    setSelectedZoning([])
     setSearchDescription('')
   }
 
@@ -196,6 +236,24 @@ export const Search = () => {
           overflow: 'auto'
         }}
       />
+      <TreeSelect
+        showSearch
+        className="w-96"
+        placeholder="İmar"
+        treeData={treeDataZoning}
+        onChange={(value) => {
+          setSelectedZoning(value)
+        }}
+        value={selectedZoning}
+        allowClear
+        multiple
+        treeDefaultExpandAll
+        treeCheckable={true}
+        dropdownStyle={{
+          maxHeight: 400,
+          overflow: 'auto'
+        }}
+      />
       <Button
         disabled={selectedDistrict.length === 0}
         className="w-96"
@@ -204,7 +262,8 @@ export const Search = () => {
             const data = await window.context.getSearchResults(
               selectedCity!,
               selectedTown!,
-              getUniqueSecondParts(selectedDistrict)
+              getUniqueSecondParts(selectedDistrict),
+              selectedZoning
             )
             const newSearch = {
               results: data.map((item) => ({

@@ -33,8 +33,9 @@ try {
     getSearchResults: (
       city: Parameters<SearchResults>[0],
       town: Parameters<SearchResults>[1],
-      quarters: Parameters<SearchResults>[2]
-    ) => ipcRenderer.invoke('getSearchResults', city, town, quarters),
+      quarters: Parameters<SearchResults>[2],
+      zonings: Parameters<SearchResults>[3]
+    ) => ipcRenderer.invoke('getSearchResults', city, town, quarters, zonings),
 
     setTapuData: (data: Parameters<SetTapuData>[0]) => ipcRenderer.invoke('setTapuData', data),
 
