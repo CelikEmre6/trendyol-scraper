@@ -30,13 +30,12 @@ export const getData = async (url: string) => {
     if (url.includes('?')) {
       pagedUrl = `${url}&pagingOffset=${pageCount * 50}&pagingSize=50`
     } else {
-      pagedUrl = `?${url}&pagingOffset=${pageCount * 50}&pagingSize=50`
+      pagedUrl = `${url}?pagingOffset=${pageCount * 50}&pagingSize=50`
     }
     try {
       await page.goto(pagedUrl, {
         waitUntil: 'domcontentloaded'
       })
-      await page.reload()
       await page.waitForSelector('.searchResultsFirstColumn', {
         timeout: 60000
       })
@@ -157,7 +156,7 @@ export const getData = async (url: string) => {
                   const isimStyleContent = window.getComputedStyle(isimElement, ':before').content
                   isim = isimStyleContent.replace(/["']/g, '') || 'Belirtilmemiş'
                 }
-              } else {
+              } else if (listingData.Kimden) {
                 // Sahibinden değilse, kurumsal bilgileri al
                 const sirketElement = document.querySelector('.user-info-store-name a')
                 if (sirketElement) {
@@ -173,26 +172,37 @@ export const getData = async (url: string) => {
                 if (telefonElement) {
                   telefonNo = telefonElement.innerText.trim() || 'Belirtilmemiş'
                 }
+              } else {
+                telefonNo =
+                  document
+                    .querySelector('#phoneInfoPart > li > span.pretty-phone-part.show-part > span')
+                    ?.getAttribute('data-content') || 'Belirtilmemiş'
+
+                const isimElement = document.querySelector('.username-info-area h5 span')
+                if (isimElement) {
+                  const isimStyleContent = window.getComputedStyle(isimElement, ':before').content
+                  isim = isimStyleContent.replace(/["']/g, '') || 'Belirtilmemiş'
+                }
               }
               const explanationElement = document.querySelector(
                 '#classifiedDescription'
               ) as HTMLElement
-              const explanation = explanationElement.innerText.trim()
+              const explanation = explanationElement ? explanationElement.innerText.trim() : ''
 
               const ilElement = document.querySelector(
                 '#classifiedDetail > div > div.classifiedDetailContent > div.classifiedInfo > h2 > a:nth-child(1)'
               ) as HTMLElement
-              const il = ilElement.innerText
+              const il = ilElement ? ilElement.innerText : ''
 
               const ilceElement = document.querySelector(
                 '#classifiedDetail > div > div.classifiedDetailContent > div.classifiedInfo > h2 > a:nth-child(3)'
               ) as HTMLElement
-              const ilce = ilceElement.innerText
+              const ilce = ilceElement ? ilceElement.innerText : ''
 
               const mahElement = document.querySelector(
                 '#classifiedDetail > div > div.classifiedDetailContent > div.classifiedInfo > h2 > a:nth-child(5)'
               ) as HTMLElement
-              const mahalle = mahElement.innerText
+              const mahalle = mahElement ? mahElement.innerText : ''
               // Resim linklerini saklayacağımız bir dizi oluşturuyoruz
               const imageLinks: string[] = []
 
