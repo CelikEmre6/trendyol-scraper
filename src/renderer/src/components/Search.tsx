@@ -37,14 +37,14 @@ export const Search = () => {
         onClick={async () => {
           try {
             const data = await window.context.getSearchResults(url!)
-            // const newSearch = {
-            //   results: data.map((item) => ({
-            //     ...item
-            //   })),
-            //   date: new Date().getTime(),
-            //   description: selectedUrl
-            // }
-            // await setSearchResults(newSearch)
+            const newSearch = {
+              results: data.map((item) => ({
+                ...item
+              })),
+              date: new Date().getTime(),
+              description: url
+            }
+            await setSearchResults(newSearch)
             refresh()
           } catch (error) {
             console.error(error)

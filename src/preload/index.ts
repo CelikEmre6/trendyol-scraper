@@ -1,12 +1,10 @@
 import {
   DeleteNote,
   DeleteSearch,
-  ImportFromExcel,
   ReadNote,
   SaveSearch,
   SearchResults,
   SetSettingsJson,
-  SetTapuData,
   WriteNote
 } from '@shared/types'
 import { contextBridge, ipcRenderer } from 'electron'
@@ -33,8 +31,6 @@ try {
     getSearchResults: (url: Parameters<SearchResults>[0]) =>
       ipcRenderer.invoke('getSearchResults', url),
 
-    setTapuData: (data: Parameters<SetTapuData>[0]) => ipcRenderer.invoke('setTapuData', data),
-
     solveCaptcha: () => ipcRenderer.invoke('solveCaptcha'),
 
     getSettingsJson: () => ipcRenderer.invoke('getSettingsJson'),
@@ -49,12 +45,7 @@ try {
     deleteSearch: (date: Parameters<DeleteSearch>[0]) => ipcRenderer.invoke('deleteSearch', date),
 
     createExcelFile: (search: Parameters<SaveSearch>[0]) =>
-      ipcRenderer.invoke('createExcelFile', search),
-
-    importFromExcel: (
-      filePath: Parameters<ImportFromExcel>[0],
-      desc?: Parameters<ImportFromExcel>[1]
-    ) => ipcRenderer.invoke('importFromExcel', filePath, desc)
+      ipcRenderer.invoke('createExcelFile', search)
   })
 } catch (error) {
   console.error('Failed to expose preload functions:', error)

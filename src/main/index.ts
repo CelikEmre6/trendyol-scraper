@@ -7,10 +7,8 @@ import {
   getSearch,
   getSearchResults,
   getSettingsJson,
-  importFromExcel,
   readNote,
   saveSearch,
-  setTapuData,
   solveCaptcha,
   writeNote,
   writeSettingsJson
@@ -22,12 +20,10 @@ import {
   DeleteSearch,
   GetNotes,
   GetSearch,
-  ImportFromExcel,
   ReadNote,
   SaveSearch,
   SearchResults,
   SetSettingsJson,
-  SetTapuData,
   WriteNote
 } from '@shared/types'
 import { app, BrowserWindow, ipcMain, shell } from 'electron'
@@ -99,7 +95,6 @@ app.whenReady().then(() => {
   ipcMain.handle('getSearchResults', (_, ...args: Parameters<SearchResults>) =>
     getSearchResults(...args)
   )
-  ipcMain.handle('setTapuData', (_, ...args: Parameters<SetTapuData>) => setTapuData(...args))
   ipcMain.handle('solveCaptcha', () => solveCaptcha())
   ipcMain.handle('getSettingsJson', () => getSettingsJson())
   ipcMain.handle('setSettingsJson', (_, ...args: Parameters<SetSettingsJson>) =>
@@ -111,9 +106,6 @@ app.whenReady().then(() => {
   ipcMain.handle('createExcelFile', (_, ...args: Parameters<SaveSearch>) =>
     createExcelFile(...args)
   )
-  ipcMain.handle('importFromExcel', (_, ...args: Parameters<ImportFromExcel>) => {
-    importFromExcel(...args)
-  })
 
   createWindow()
 

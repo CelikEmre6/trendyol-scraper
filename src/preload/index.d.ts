@@ -5,12 +5,10 @@ import {
   GetNotes,
   GetSearch,
   GetSettingsJson,
-  ImportFromExcel,
   ReadNote,
   SaveSearch,
   SearchResults,
   SetSettingsJson,
-  SetTapuData,
   WriteNote
 } from '@shared/types'
 
@@ -25,14 +23,12 @@ declare global {
       deleteNote: DeleteNote
       solveCaptcha: () => Promise<void>
       getSearchResults: SearchResults
-      setTapuData: SetTapuData
       getSettingsJson: GetSettingsJson
       setSettingsJson: SetSettingsJson
       saveSearch: SaveSearch
       getSearch: GetSearch
       deleteSearch: DeleteSearch
       createExcelFile: SaveSearch
-      importFromExcel: ImportFromExcel
     }
   }
 }

@@ -1,4 +1,6 @@
 export type SearchResult = {
+  il: string
+  ilce: string
   location: string
   title: string
   link: string

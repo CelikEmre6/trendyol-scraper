@@ -33,6 +33,18 @@ export const History = () => {
       width: 100
     },
     {
+      title: 'İl',
+      dataIndex: 'il',
+      key: 'il',
+      width: 100
+    },
+    {
+      title: 'ilce',
+      dataIndex: 'ilce',
+      key: 'ilce',
+      width: 100
+    },
+    {
       title: 'Konum',
       dataIndex: 'location',
       key: 'location',

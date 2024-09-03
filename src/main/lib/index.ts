@@ -1,8 +1,7 @@
 import { getData } from '@/browser/func/getData'
-import { setTapu } from '@/browser/func/setTapu'
 import { testFunc } from '@/browser/tests/cloudflare_test'
 import { appDirectoryName, fileEncoding, welcomeNoteFilename } from '@shared/constants'
-import { NoteInfo, Search, SearchResult } from '@shared/models'
+import { NoteInfo, Search } from '@shared/models'
 import {
   CreateNote,
   DeleteNote,
@@ -10,12 +9,10 @@ import {
   GetNotes,
   GetSearch,
   GetSettingsJson,
-  ImportFromExcel,
   ReadNote,
   SaveSearch,
   SearchResults,
   SetSettingsJson,
-  SetTapuData,
   WriteNote
 } from '@shared/types'
 import { dialog } from 'electron'
@@ -144,12 +141,7 @@ export const solveCaptcha: () => Promise<void> = async () => {
 
 export const getSearchResults: SearchResults = async (url) => {
   const data = await getData(url)
-  console.log(data)
-  //return data
-}
-
-export const setTapuData: SetTapuData = (data) => {
-  setTapu(data).then()
+  return data
 }
 
 function getMacAddress() {
@@ -284,33 +276,75 @@ export const deleteSearch: DeleteSearch = async (filename) => {
 
 export const createExcelFile: SaveSearch = async (jsonData) => {
   const rootDir = getRootDir()
-
   const workbook = new ExcelJS.Workbook()
   const worksheet = workbook.addWorksheet('Arsa Arama Sonuçları')
 
-  // Sütun başlıklarını ekle
-  worksheet.columns = [
-    { header: 'Başlık', key: 'title', width: 30 },
-    { header: 'Link', key: 'link', width: 50 },
-    { header: 'Resim', key: 'imageUrl', width: 50 },
-    { header: 'm2', key: 'm2', width: 10 },
-    { header: 'Fiyat', key: 'price', width: 15 },
-    { header: 'm2 Fiyatı', key: 'pricePerM2', width: 15 },
-    { header: 'İl', key: 'il', width: 15 },
-    { header: 'İlçe', key: 'ilce', width: 15 },
-    { header: 'Lokasyon', key: 'location', width: 20 },
-    { header: 'Ada No', key: 'adaNo', width: 10 },
-    { header: 'Parsel No', key: 'parselNo', width: 10 },
-    { header: 'Kimden', key: 'kimden', width: 20 },
-    { header: 'İmar Durumu', key: 'imar', width: 20 },
-    { header: 'Telefon No', key: 'telefonNo', width: 20 },
-    { header: 'İsim', key: 'isim', width: 20 },
-    { header: 'Şirket', key: 'sirket', width: 30 }
-  ]
+  const keys = new Set<string>()
+  let maxImageCount = 0
+
+  // Tüm sonuçları ve detaylarını tarayarak anahtarları topluyoruz
+  jsonData.results.forEach((result) => {
+    Object.keys(result).forEach((key) => {
+      if (key !== 'detaylar') {
+        keys.add(key)
+      }
+    })
+
+    if (result.detaylar) {
+      Object.keys(result.detaylar).forEach((key) => {
+        if (key !== 'Resimler') {
+          keys.add(key)
+        }
+      })
+
+      // Resimler alanının bir dizi olup olmadığını kontrol et
+      if (Array.isArray(result.detaylar.Resimler)) {
+        maxImageCount = Math.max(maxImageCount, result.detaylar.Resimler.length)
+      }
+    }
+  })
+
+  // Sütun başlıklarını dinamik olarak oluştur
+  const columns = Array.from(keys).map((key: string) => ({
+    header: key.charAt(0).toUpperCase() + key.slice(1),
+    key: key,
+    width: 20
+  }))
+
+  // Resimler için ek sütunlar oluştur
+  for (let i = 1; i <= maxImageCount; i++) {
+    columns.push({
+      header: `Resim${i}`,
+      key: `Resim${i}`,
+      width: 30
+    })
+  }
+
+  worksheet.columns = columns
 
   // Verileri satır satır ekle
   jsonData.results.forEach((result) => {
-    worksheet.addRow(result)
+    const row: { [key: string]: string } = {}
+
+    // Anahtarları tarayarak verileri yerleştir
+    keys.forEach((key) => {
+      if (key in result) {
+        row[key] = result[key]
+      } else if (result.detaylar && key in result.detaylar) {
+        row[key] = result.detaylar[key]
+      } else {
+        row[key] = ''
+      }
+    })
+
+    // Resimleri yerleştir
+    if (Array.isArray(result.detaylar?.Resimler as string[])) {
+      result.detaylar.Resimler.forEach((image, index) => {
+        row[`Resim${index + 1}`] = image
+      })
+    }
+
+    worksheet.addRow(row)
   })
 
   // Excel dosyasını yaz
@@ -318,60 +352,4 @@ export const createExcelFile: SaveSearch = async (jsonData) => {
   await workbook.xlsx.writeFile(filePath)
 
   console.log(`Excel file created successfully at ${filePath}`)
-}
-
-export const importFromExcel: ImportFromExcel = async (filePath, desc) => {
-  try {
-    console.log('desc', desc)
-    const rootDir = getRootDir()
-
-    const workbook = new ExcelJS.Workbook()
-
-    // Excel dosyasını yükle
-    await workbook.xlsx.readFile(`${rootDir}/${filePath}.xlsx`)
-
-    const worksheet = workbook.getWorksheet(1) // İlk sayfayı al
-    if (!worksheet) {
-      throw new Error('Worksheet bulunamadı.')
-    }
-
-    const data: SearchResult[] = []
-
-    // İlk satırda başlıklar olduğu için ikinci satırdan itibaren okumaya başla
-    worksheet.eachRow({ includeEmpty: true }, (row, rowNumber) => {
-      if (rowNumber === 1) return // Başlıkları atla
-
-      const rowData = {
-        title: row.getCell('A').value?.toString(),
-        link: row.getCell('B').value?.toString(),
-        imageUrl: row.getCell('C').value?.toString(),
-        m2: row.getCell('D').value?.toString(),
-        price: row.getCell('E').value?.toString(),
-        pricePerM2: row.getCell('F').value?.toString(),
-        il: row.getCell('G').value?.toString(),
-        ilce: row.getCell('H').value?.toString(),
-        location: row.getCell('I').value?.toString(),
-        adaNo: row.getCell('J').value?.toString(),
-        parselNo: row.getCell('K').value?.toString(),
-        kimden: row.getCell('L').value?.toString(),
-        imar: row.getCell('M').value?.toString(),
-        telefonNo: row.getCell('N').value?.toString(),
-        isim: row.getCell('O').value?.toString(),
-        sirket: row.getCell('P').value?.toString()
-      }
-
-      data.push(rowData as SearchResult)
-    })
-
-    saveSearch({
-      results: data,
-      date: parseInt(filePath),
-      description: desc
-    })
-
-    return data
-  } catch (error) {
-    console.error('Excel dosyası işlenirken bir hata oluştu:', error)
-    throw error // Hata fırlatmak istersen
-  }
 }

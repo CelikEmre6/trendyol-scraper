@@ -7,7 +7,7 @@ interface ListingData {
 
 export const getData = async (url: string) => {
   const allData: any[] = []
-  let pageCount = 1
+  let pageCount = 0
   let forceLoginEncountered = false
 
   const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
@@ -26,14 +26,17 @@ export const getData = async (url: string) => {
       console.log('Force login encountered, reopening browser...')
       forceLoginEncountered = false
     }
-
-    //const pagedUrl = `${url}&pagingOffset=${pageCount * 50}`
-    const pagedUrl = url
+    let pagedUrl = ''
+    if (url.includes('?')) {
+      pagedUrl = `${url}&pagingOffset=${pageCount * 50}&pagingSize=50`
+    } else {
+      pagedUrl = `?${url}&pagingOffset=${pageCount * 50}&pagingSize=50`
+    }
     try {
       await page.goto(pagedUrl, {
         waitUntil: 'domcontentloaded'
       })
-
+      await page.reload()
       await page.waitForSelector('.searchResultsFirstColumn', {
         timeout: 60000
       })
@@ -66,16 +69,15 @@ export const getData = async (url: string) => {
             )?.innerText.trim() || null
           const price = priceText ? priceText : null
 
-          const location =
-            (row.querySelector('td.searchResultsLocationValue.true') as any)?.innerText.trim() ||
-            null
+          // const location =
+          //   (row.querySelector('td.searchResultsLocationValue.true') as any)?.innerText.trim() ||
+          //   null
 
           results.push({
             title,
             link: link ? `https://www.sahibinden.com${link}` : null,
             imageUrl,
-            price,
-            location
+            price
           })
         })
 
@@ -172,10 +174,25 @@ export const getData = async (url: string) => {
                   telefonNo = telefonElement.innerText.trim() || 'Belirtilmemiş'
                 }
               }
-              const imageElements = document.querySelectorAll(
-                `#classifiedDetail > div > div.classifiedDetailContent > div.classifiedDetailPhotos > div.classifiedDetailThumbListContainer > ul > li > label > img`
-              )
+              const explanationElement = document.querySelector(
+                '#classifiedDescription'
+              ) as HTMLElement
+              const explanation = explanationElement.innerText.trim()
 
+              const ilElement = document.querySelector(
+                '#classifiedDetail > div > div.classifiedDetailContent > div.classifiedInfo > h2 > a:nth-child(1)'
+              ) as HTMLElement
+              const il = ilElement.innerText
+
+              const ilceElement = document.querySelector(
+                '#classifiedDetail > div > div.classifiedDetailContent > div.classifiedInfo > h2 > a:nth-child(3)'
+              ) as HTMLElement
+              const ilce = ilceElement.innerText
+
+              const mahElement = document.querySelector(
+                '#classifiedDetail > div > div.classifiedDetailContent > div.classifiedInfo > h2 > a:nth-child(5)'
+              ) as HTMLElement
+              const mahalle = mahElement.innerText
               // Resim linklerini saklayacağımız bir dizi oluşturuyoruz
               const imageLinks: string[] = []
 
@@ -187,17 +204,25 @@ export const getData = async (url: string) => {
                 // 'li' içindeki 'img' elemanlarını seçiyoruz
                 const img = listItem.querySelector('img') as HTMLImageElement | null
                 if (img && img.src) {
-                  imageLinks.push(img.src)
+                  imageLinks.push(img.src.replace('thmb_', ''))
                 }
               })
-
+              listingData['il'] = il
+              listingData['ilce'] = ilce
+              listingData['mahalle'] = mahalle
               listingData['Resimler'] = imageLinks
               listingData['TelefonNo'] = telefonNo
               listingData['Satıcı'] = isim
               listingData['Şirket'] = sirket
+              listingData['Açıklama'] = explanation
               return listingData
             })
-
+            item.il = details.il
+            item.ilce = details.ilce
+            item.location = details.mahalle
+            delete details.il
+            delete details.ilce
+            delete details.mahalle
             item.detaylar = details
 
             await delay(Math.floor(Math.random() * 1000) + 2000)
