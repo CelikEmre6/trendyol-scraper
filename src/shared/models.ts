@@ -1,20 +1,14 @@
 export type SearchResult = {
+  location: string
   title: string
   link: string
+  date: string
   imageUrl?: string
-  m2: string
   price: string
-  pricePerM2: string
-  location: string
-  adaNo?: string
-  parselNo?: string
-  il: string
-  ilce: string
   telefonNo?: string
   isim?: string
   sirket?: string
-  kimden: string
-  imar?: string
+  detaylar: string[]
 }
 
 export type Search = {

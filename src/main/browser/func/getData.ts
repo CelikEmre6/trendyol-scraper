@@ -1,10 +1,13 @@
 /* eslint-disable no-unsafe-finally */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { connect } from '..'
+interface ListingData {
+  [key: string]: string | string[]
+}
 
 export const getData = async (url: string) => {
   const allData: any[] = []
-  let pageCount = 0
+  let pageCount = 1
   let forceLoginEncountered = false
 
   const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
@@ -24,8 +27,8 @@ export const getData = async (url: string) => {
       forceLoginEncountered = false
     }
 
-    const pagedUrl = `${url}&pagingOffset=${pageCount * 50}`
-
+    //const pagedUrl = `${url}&pagingOffset=${pageCount * 50}`
+    const pagedUrl = url
     try {
       await page.goto(pagedUrl, {
         waitUntil: 'domcontentloaded'
@@ -55,10 +58,6 @@ export const getData = async (url: string) => {
           const imageElement = row.querySelector('td.searchResultsLargeThumbnail img')
           const imageUrl = imageElement ? imageElement.getAttribute('src') : null
 
-          const m2Text =
-            (row.querySelector('td.searchResultsAttributeValue') as any)?.innerText.trim() || null
-          const m2 = m2Text ? m2Text : null
-
           const priceText =
             (
               row.querySelector(
@@ -66,15 +65,6 @@ export const getData = async (url: string) => {
               ) as any
             )?.innerText.trim() || null
           const price = priceText ? priceText : null
-
-          const pricePerM2Text =
-            (row.querySelectorAll('td.searchResultsPriceValue')[1] as any)?.innerText.trim() || null
-          const pricePerM2 = pricePerM2Text ? pricePerM2Text : null
-
-          const dateElement = row.querySelector('td.searchResultsDateValue.true')
-          const day = dateElement?.querySelector('span')?.innerText.trim() || null
-          const year = dateElement?.querySelectorAll('span')[1]?.innerText.trim() || null
-          const date = day && year ? new Date(`${day} ${year}`) : null
 
           const location =
             (row.querySelector('td.searchResultsLocationValue.true') as any)?.innerText.trim() ||
@@ -84,10 +74,7 @@ export const getData = async (url: string) => {
             title,
             link: link ? `https://www.sahibinden.com${link}` : null,
             imageUrl,
-            m2,
             price,
-            pricePerM2,
-            date,
             location
           })
         })
@@ -131,34 +118,33 @@ export const getData = async (url: string) => {
             })
 
             const details = await page.evaluate(() => {
-              const detailItems = document.querySelectorAll('li')
-              let adaNo = 'Belirtilmemiş'
-              let parselNo = 'Belirtilmemiş'
-              let kimden = 'Belirtilmemiş'
+              const listingData: ListingData = {}
+
+              // `ul` etiketinin içindeki `li` etiketlerini bul
+              const infoList = document.querySelector('ul.classifiedInfoList')
+              if (infoList) {
+                const items = infoList.querySelectorAll('li')
+                if (items) {
+                  items.forEach((item) => {
+                    // `strong` etiketini bul ve kontrol et
+                    const strongElement = item.querySelector('strong')
+                    const spanElement = item.querySelector('span')
+
+                    if (strongElement && spanElement) {
+                      const key = strongElement.textContent?.trim().replace(':', '') || ''
+                      const value = spanElement.textContent?.trim() || ''
+                      // Anahtar-değer çiftini nesneye ekle
+                      listingData[key] = value
+                    }
+                  })
+                }
+              }
               let telefonNo = 'Belirtilmemiş'
               let isim = 'Belirtilmemiş'
               let sirket = 'Belirtilmemiş'
-              let imar = 'Belirtilmemiş'
-
-              detailItems.forEach((item) => {
-                if (item.innerText.includes('Ada No')) {
-                  adaNo =
-                    item.querySelector('span')?.innerText.trim().replace('.', '') || 'Belirtilmemiş'
-                }
-                if (item.innerText.includes('Parsel No')) {
-                  parselNo =
-                    item.querySelector('span')?.innerText.trim().replace('.', '') || 'Belirtilmemiş'
-                }
-                if (item.innerText.includes('Kimden')) {
-                  kimden = item.querySelector('span')?.innerText.trim() || 'Belirtilmemiş'
-                }
-                if (item.innerText.includes('İmar Durumu')) {
-                  imar = item.querySelector('span')?.innerText.trim() || 'Belirtilmemiş'
-                }
-              })
 
               // Kimden bilgisine göre telefon ve isim alıyoruz
-              if (kimden === 'Sahibinden') {
+              if (listingData.Kimden === 'Sahibinden') {
                 telefonNo =
                   document
                     .querySelector('#phoneInfoPart > li > span.pretty-phone-part.show-part > span')
@@ -186,25 +172,33 @@ export const getData = async (url: string) => {
                   telefonNo = telefonElement.innerText.trim() || 'Belirtilmemiş'
                 }
               }
+              const imageElements = document.querySelectorAll(
+                `#classifiedDetail > div > div.classifiedDetailContent > div.classifiedDetailPhotos > div.classifiedDetailThumbListContainer > ul > li > label > img`
+              )
 
-              return {
-                adaNo,
-                parselNo,
-                kimden,
-                telefonNo,
-                isim,
-                sirket,
-                imar
-              }
+              // Resim linklerini saklayacağımız bir dizi oluşturuyoruz
+              const imageLinks: string[] = []
+
+              // 'li' elemanlarını seçiyoruz
+              const listItems = document.querySelectorAll('ul.classifiedDetailThumbList > li')
+
+              // Her bir 'li' elemanını kontrol ediyoruz
+              listItems.forEach((listItem) => {
+                // 'li' içindeki 'img' elemanlarını seçiyoruz
+                const img = listItem.querySelector('img') as HTMLImageElement | null
+                if (img && img.src) {
+                  imageLinks.push(img.src)
+                }
+              })
+
+              listingData['Resimler'] = imageLinks
+              listingData['TelefonNo'] = telefonNo
+              listingData['Satıcı'] = isim
+              listingData['Şirket'] = sirket
+              return listingData
             })
 
-            item.adaNo = details.adaNo
-            item.parselNo = details.parselNo
-            item.kimden = details.kimden
-            item.telefonNo = details.telefonNo
-            item.isim = details.isim
-            item.sirket = details.sirket
-            item.imar = details.imar
+            item.detaylar = details
 
             await delay(Math.floor(Math.random() * 1000) + 2000)
           } catch (error) {
@@ -213,7 +207,7 @@ export const getData = async (url: string) => {
           }
         }
 
-        if (!isNaN(item.adaNo) && !isNaN(item.parselNo)) {
+        if (item.link) {
           allData.push(item)
         }
 
@@ -236,6 +230,5 @@ export const getData = async (url: string) => {
       }
     }
   }
-
   return allData.slice(0, 250)
 }

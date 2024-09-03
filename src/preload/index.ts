@@ -30,12 +30,8 @@ try {
 
     deleteNote: (title: Parameters<DeleteNote>[0]) => ipcRenderer.invoke('deleteNote', title),
 
-    getSearchResults: (
-      city: Parameters<SearchResults>[0],
-      town: Parameters<SearchResults>[1],
-      quarters: Parameters<SearchResults>[2],
-      zonings: Parameters<SearchResults>[3]
-    ) => ipcRenderer.invoke('getSearchResults', city, town, quarters, zonings),
+    getSearchResults: (url: Parameters<SearchResults>[0]) =>
+      ipcRenderer.invoke('getSearchResults', url),
 
     setTapuData: (data: Parameters<SetTapuData>[0]) => ipcRenderer.invoke('setTapuData', data),
 

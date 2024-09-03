@@ -27,39 +27,15 @@ export const History = () => {
       width: 250
     },
     {
-      title: 'm2',
-      dataIndex: 'm2',
-      key: 'm2',
-      width: 100
-    },
-    {
       title: 'Fiyat',
       dataIndex: 'price',
       key: 'price',
       width: 100
     },
     {
-      title: 'm2 Fiyat',
-      dataIndex: 'pricePerM2',
-      key: 'pricePerM2',
-      width: 100
-    },
-    {
       title: 'Konum',
       dataIndex: 'location',
       key: 'location',
-      width: 100
-    },
-    {
-      title: 'Ada No',
-      dataIndex: 'adaNo',
-      key: 'adaNo',
-      width: 100
-    },
-    {
-      title: 'Parsel No',
-      dataIndex: 'parselNo',
-      key: 'parselNo',
       width: 100
     }
   ]
@@ -82,37 +58,6 @@ export const History = () => {
             }}
           >
             Excele Aktar
-          </Button>
-
-          <Button
-            type="primary"
-            onClick={async () => {
-              const data = await window.context.importFromExcel(
-                selectedSearch.date.toString(),
-                selectedSearch.description
-              )
-
-              console.log(data)
-
-              window.location.reload()
-
-              // await setSearchResults({
-              //   date: new Date().getTime(),
-              //   description: selectedSearch.description,
-              //   results: data
-              // })
-            }}
-          >
-            Excelden İçe Aktar
-          </Button>
-
-          <Button
-            type="primary"
-            onClick={() => {
-              window.context.setTapuData(selectedSearch.results)
-            }}
-          >
-            Tapuda Göster
           </Button>
         </div>
       </div>

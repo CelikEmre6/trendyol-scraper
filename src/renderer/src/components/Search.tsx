@@ -1,280 +1,50 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { saveSearchResultsAtom } from '@renderer/store'
-import { Button, Select, TreeSelect } from 'antd'
+import { Button } from 'antd'
 import { useSetAtom } from 'jotai'
-import { useEffect, useState } from 'react'
-import { LuRefreshCw } from 'react-icons/lu'
-
-const Zonings = [
-  { name: 'Ada', value: '70779' },
-  { name: 'A Lejantlı', value: '97231' },
-  { name: 'Arazi', value: '1210730' },
-  { name: 'Bağ Bahce', value: '70778' },
-  { name: 'Depo Antrepo', value: '70780' },
-  { name: 'Eğitim', value: '70787' },
-  { name: 'Enerji Depolama', value: '1116194' },
-  { name: 'Konut', value: '70782' },
-  { name: 'Muhtelif', value: '70786' },
-  { name: 'Özel Kullanım', value: '70789' },
-  { name: 'Sağlık', value: '70781' },
-  { name: 'Sanayi', value: '70783' },
-  { name: 'Sera', value: '1138378' },
-  { name: 'Sit Alanı', value: '70788' },
-  { name: 'Spor Alanı', value: '113936' },
-  { name: 'Tarla', value: '70790' },
-  { name: 'Tarla + Bağ', value: '1263150' },
-  { name: 'Ticari', value: '70784' },
-  { name: 'Ticari + Konut', value: '824988' },
-  { name: 'Toplu Konut', value: '70791' },
-  { name: 'Turizm', value: '70792' },
-  { name: 'Turizm + Konut', value: '1239902' },
-  { name: 'Turizm + Ticari', value: '1252713' },
-  { name: 'Villa', value: '97232' },
-  { name: 'Zeytinlik', value: '1129624' }
-]
-
-const treeDataZoning = Zonings.map((zoning) => ({
-  title: zoning.name,
-  value: zoning.value,
-  key: zoning.value // Key genellikle benzersiz bir değer olmalıdır
-}))
-
-function getUniqueSecondParts(arr): string[] {
-  const secondParts = arr.map((item) => item.split('-')[1]) // İkinci kısmı al
-  const uniqueSecondParts = [...new Set(secondParts)] // Benzersiz değerleri filtrele
-  return uniqueSecondParts as string[]
-}
-function getUniqueZonings(arr): string[] {
-  const uniqueZonings = [...new Set(arr)]
-  return uniqueZonings as string[]
-}
+import { useState } from 'react'
 
 export const Search = () => {
-  const [captchaSolved, setCaptchaSolved] = useState(false)
+  const [url, setUrl] = useState('')
 
-  const [cities, setCities] = useState([])
-  const [towns, setTowns] = useState([])
-  const [districts, setDistricts] = useState([])
-
-  const [selectedCity, setSelectedCity] = useState(null)
-  const [selectedTown, setSelectedTown] = useState(null)
-  const [selectedDistrict, setSelectedDistrict] = useState([])
-  const [selectedZoning, setSelectedZoning] = useState([])
+  const [selectedUrl, setSelectedUrl] = useState(null)
 
   const [searchDescription, setSearchDescription] = useState('')
 
   const setSearchResults = useSetAtom(saveSearchResultsAtom)
 
-  const getCities = async () => {
-    const resp = await fetch(
-      'https://www.sahibinden.com/ajax/location/loadCitiesByCountryId?vcIncluded=true&address_country=1',
-      {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json'
-        }
-      }
-    ).then((response) => {
-      return response.json()
-    })
-
-    console.log(resp.data['1'])
-
-    return resp.data['1']
+  const handleUrlChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setUrl(event.target.value)
   }
-
-  const getTownsByCityId = async (cityId: number) => {
-    const resp = await fetch(
-      `https://www.sahibinden.com/ajax/location/loadTownsByCityIds?address_city=${cityId}`,
-      {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json'
-        }
-      }
-    ).then((response) => {
-      return response.json()
-    })
-
-    return resp.data[cityId]
-  }
-
-  const getDistrictsByTownId = async (townId: number) => {
-    const resp = await fetch(
-      `https://www.sahibinden.com/ajax/location/loadDistrictsByTownIds?address_town=${townId}`,
-      {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json'
-        }
-      }
-    ).then((response) => {
-      return response.json()
-    })
-
-    return resp.data[townId]
-  }
-
-  useEffect(() => {
-    if (captchaSolved) {
-      const fetchData = async () => {
-        const cities = await getCities()
-        setCities(
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          cities.map((city: any) => ({
-            label: city.name,
-            value: city.id
-          }))
-        )
-      }
-
-      fetchData()
-    }
-  }, [captchaSolved])
 
   const refresh = () => {
-    setCaptchaSolved(false)
-    setCities([])
-    setTowns([])
-    setDistricts([])
-    setSelectedCity(null)
-    setSelectedTown(null)
-    setSelectedDistrict([])
-    setSelectedZoning([])
     setSearchDescription('')
+    setUrl('')
+    setSelectedUrl(null)
   }
 
   return (
     <div className="w-full h-full flex flex-col items-center justify-center space-y-3 relative">
-      {captchaSolved && (
-        <span className="absolute right-6 top-3 cursor-pointer" onClick={refresh}>
-          <LuRefreshCw size={24} />
-        </span>
-      )}
-      {!captchaSolved && (
-        <Button
-          className="w-96"
-          type="primary"
-          onClick={async () => {
-            await window.context.solveCaptcha()
-            setCaptchaSolved(true)
-          }}
-        >
-          Bot Korumasını Geç
-        </Button>
-      )}
-      <Select
-        placeholder="İl"
-        options={cities}
-        loading={cities.length === 0 && captchaSolved}
-        disabled={cities.length === 0}
-        className="w-96"
-        onSelect={(value) => {
-          setSelectedCity(value)
-          setSelectedTown(null)
-          setSearchDescription((cities.find((city: any) => city.value === value) as any)?.label)
-          getTownsByCityId(value!).then((towns) => {
-            setTowns(
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              towns.map((town: any) => ({
-                label: town.name,
-                value: town.id
-              }))
-            )
-          })
-        }}
-        value={selectedCity}
-      />
-      <Select
-        placeholder="İlçe"
-        className="w-96"
-        options={towns}
-        disabled={!selectedCity}
-        loading={towns.length === 0 && selectedCity !== null}
-        onSelect={(value) => {
-          setSelectedDistrict([])
-          setSelectedTown(value)
-          setSearchDescription(
-            searchDescription.split(' - ')[0] +
-              ' - ' +
-              (towns.find((town: any) => town.value === value) as any)?.label
-          )
-          getDistrictsByTownId(value!).then((districts) => {
-            setDistricts(
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              districts.map((district: any) => ({
-                value: district.id,
-                title: district.name,
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                children: district.quarters.map((quarter: any) => ({
-                  value: district.id + '-' + quarter.id,
-                  title: quarter.name
-                }))
-              }))
-            )
-          })
-        }}
-        value={selectedTown}
-      />
-      <TreeSelect
-        showSearch
-        disabled={!selectedTown}
-        loading={districts.length === 0 && selectedTown !== null}
-        className="w-96"
-        placeholder="Mahalle/Köy"
-        treeData={districts}
-        onChange={(value) => {
-          setSelectedDistrict(value)
-        }}
-        value={selectedDistrict}
-        allowClear
-        multiple
-        treeDefaultExpandAll
-        treeCheckable={true}
-        dropdownStyle={{
-          maxHeight: 400,
-          overflow: 'auto'
-        }}
-      />
-      <TreeSelect
-        showSearch
-        className="w-96"
-        placeholder="İmar"
-        treeData={treeDataZoning}
-        onChange={(value) => {
-          setSelectedZoning(value)
-        }}
-        value={selectedZoning}
-        allowClear
-        multiple
-        treeDefaultExpandAll
-        treeCheckable={true}
-        dropdownStyle={{
-          maxHeight: 400,
-          overflow: 'auto'
-        }}
-      />
+      <input
+        type="text"
+        placeholder="Sahibinden Linki Giriniz"
+        value={url}
+        onChange={handleUrlChange}
+        className="w-96 text-blue-500"
+      ></input>
       <Button
-        disabled={selectedDistrict.length === 0}
         className="w-96"
         onClick={async () => {
           try {
-            const data = await window.context.getSearchResults(
-              selectedCity!,
-              selectedTown!,
-              getUniqueSecondParts(selectedDistrict),
-              selectedZoning
-            )
-            const newSearch = {
-              results: data.map((item) => ({
-                ...item,
-                il: searchDescription.split(' - ')[0],
-                ilce: searchDescription.split(' - ')[1]
-              })),
-              date: new Date().getTime(),
-              description: searchDescription
-            }
-            await setSearchResults(newSearch)
+            const data = await window.context.getSearchResults(url!)
+            // const newSearch = {
+            //   results: data.map((item) => ({
+            //     ...item
+            //   })),
+            //   date: new Date().getTime(),
+            //   description: selectedUrl
+            // }
+            // await setSearchResults(newSearch)
             refresh()
           } catch (error) {
             console.error(error)
