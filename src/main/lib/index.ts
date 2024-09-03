@@ -15,6 +15,7 @@ import {
   SetSettingsJson,
   WriteNote
 } from '@shared/types'
+import { exec } from 'child_process'
 import { dialog } from 'electron'
 import ExcelJS from 'exceljs'
 import { ensureDir, readFile, readdir, remove, stat, writeFile } from 'fs-extra'
@@ -350,6 +351,10 @@ export const createExcelFile: SaveSearch = async (jsonData) => {
   // Excel dosyasını yaz
   const filePath = `${rootDir}/${jsonData.date}.xlsx`
   await workbook.xlsx.writeFile(filePath)
-
+  exec(`start "" "${filePath}"`, (error) => {
+    if (error) {
+      console.error(`Error opening file: ${error}`)
+    }
+  })
   console.log(`Excel file created successfully at ${filePath}`)
 }
