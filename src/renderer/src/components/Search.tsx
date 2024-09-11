@@ -54,6 +54,9 @@ export const Search = () => {
       >
         Submit
       </Button>
+      <div className="width: 100%; background-color: #ddd;">
+        <div id="progressBar" className="width: 0%; height: 30px; background-color: #4CAF50;"></div>
+      </div>
     </div>
   )
 }

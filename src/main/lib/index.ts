@@ -11,7 +11,6 @@ import {
   GetSettingsJson,
   ReadNote,
   SaveSearch,
-  SearchResults,
   SetSettingsJson,
   WriteNote
 } from '@shared/types'
@@ -140,8 +139,8 @@ export const solveCaptcha: () => Promise<void> = async () => {
   await testFunc()
 }
 
-export const getSearchResults: SearchResults = async (url) => {
-  const data = await getData(url)
+export const getSearchResults = async (url: string, onProgress?: (progress: number) => void) => {
+  const data = await getData(url, onProgress)
   return data
 }
 

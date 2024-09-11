@@ -1,16 +1,8 @@
 export type SearchResult = {
-  il: string
-  ilce: string
-  location: string
-  title: string
-  link: string
-  date: string
-  imageUrl?: string
-  price: string
-  telefonNo?: string
-  isim?: string
-  sirket?: string
-  detaylar: string[]
+  productId: number
+  url: string
+  productGroupId: string
+  details: string[]
 }
 
 export type Search = {

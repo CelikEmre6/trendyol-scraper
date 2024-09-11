@@ -92,9 +92,9 @@ app.whenReady().then(() => {
   ipcMain.handle('writeNote', (_, ...args: Parameters<WriteNote>) => writeNote(...args))
   ipcMain.handle('createNote', (_, ...args: Parameters<CreateNote>) => createNote(...args))
   ipcMain.handle('deleteNote', (_, ...args: Parameters<DeleteNote>) => deleteNote(...args))
-  ipcMain.handle('getSearchResults', (_, ...args: Parameters<SearchResults>) =>
-    getSearchResults(...args)
-  )
+  // ipcMain.handle('getSearchResults', (_, ...args: Parameters<SearchResults>) =>
+  //   getSearchResults(...args)
+  // )
   ipcMain.handle('solveCaptcha', () => solveCaptcha())
   ipcMain.handle('getSettingsJson', () => getSettingsJson())
   ipcMain.handle('setSettingsJson', (_, ...args: Parameters<SetSettingsJson>) =>
@@ -106,6 +106,15 @@ app.whenReady().then(() => {
   ipcMain.handle('createExcelFile', (_, ...args: Parameters<SaveSearch>) =>
     createExcelFile(...args)
   )
+  ipcMain.handle('getSearchResults', async (event, ...args: Parameters<SearchResults>) => {
+    return new Promise((resolve, reject) => {
+      getSearchResults(...args, (progress) => {
+        event.sender.send('progress-update', progress) // İlerleme yüzdesini frontend'e gönderiyoruz
+      })
+        .then((data) => resolve(data)) // İşlem tamamlandığında veriyi frontend'e geri döndürür
+        .catch((error) => reject(error)) // Hata olursa bunu yakalar
+    })
+  })
 
   createWindow()
 

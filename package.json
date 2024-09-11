@@ -28,6 +28,7 @@
     "@tailwindcss/typography": "^0.5.14",
     "antd": "^5.20.2",
     "axios": "^1.7.5",
+    "cheerio": "^1.0.0",
     "chrome-launcher": "^1.1.2",
     "chrome-remote-interface": "^0.33.2",
     "cli-color": "^2.0.4",

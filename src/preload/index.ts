@@ -14,6 +14,14 @@ if (!process.contextIsolated) {
 }
 
 try {
+  ipcRenderer.on('progress-update', (event, progress) => {
+    const progressBar = document.getElementById('progressBar')
+    if (progressBar) {
+      progressBar.style.width = `${progress}%`
+      progressBar.innerText = `${progress}%`
+    }
+  })
+
   contextBridge.exposeInMainWorld('context', {
     locale: navigator.language,
 
