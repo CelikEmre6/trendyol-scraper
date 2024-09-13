@@ -277,29 +277,39 @@ export const deleteSearch: DeleteSearch = async (filename) => {
 export const createExcelFile: SaveSearch = async (jsonData) => {
   const rootDir = getRootDir()
   const workbook = new ExcelJS.Workbook()
-  const worksheet = workbook.addWorksheet('Arsa Arama Sonuçları')
+  const worksheet = workbook.addWorksheet('Trendyol Arama Sonuçları')
 
   const keys = new Set<string>()
   let maxImageCount = 0
-
+  const itemnumberKey = 'Item Number'
   // Tüm sonuçları ve detaylarını tarayarak anahtarları topluyoruz
   jsonData.results.forEach((result) => {
     Object.keys(result).forEach((key) => {
-      if (key !== 'detaylar') {
+      if (key !== 'details') {
         keys.add(key)
       }
     })
 
-    if (result.detaylar) {
-      Object.keys(result.detaylar).forEach((key) => {
-        if (key !== 'Resimler') {
+    if (result.details) {
+      if (result.details.sizes && result.details.sizes.length > 0) {
+        Object.keys(result.details.sizes[0]).forEach((key) => {
+          keys.add(key)
+        })
+      }
+      Object.keys(result.details).forEach((key) => {
+        if (key !== 'images' && key !== 'attributes' && key !== 'sizes' && key !== 'images') {
           keys.add(key)
         }
       })
+      if (result.details.attributes) {
+        Object.keys(result.details.attributes).forEach((key) => {
+          keys.add(key)
+        })
+      }
 
       // Resimler alanının bir dizi olup olmadığını kontrol et
-      if (Array.isArray(result.detaylar.Resimler)) {
-        maxImageCount = Math.max(maxImageCount, result.detaylar.Resimler.length)
+      if (Array.isArray(result.details.images)) {
+        maxImageCount = Math.max(maxImageCount, result.details.images.length)
       }
     }
   })
@@ -324,27 +334,33 @@ export const createExcelFile: SaveSearch = async (jsonData) => {
 
   // Verileri satır satır ekle
   jsonData.results.forEach((result) => {
-    const row: { [key: string]: string } = {}
+    result.details.sizes.forEach((size) => {
+      const row: { [key: string]: string } = {}
+      keys.forEach((key) => {
+        if (key in result) {
+          row[key] = result[key]
+        } else if (result.details && key in result.details) {
+          row[key] = result.details[key]
+        } else if (result.details.attributes && key in result.details.attributes) {
+          row[key] = result.details.attributes[key]
+        } else if (size && key in size) {
+          row[key] = size[key]
+        } else {
+          row[key] = ''
+        }
+      })
 
-    // Anahtarları tarayarak verileri yerleştir
-    keys.forEach((key) => {
-      if (key in result) {
-        row[key] = result[key]
-      } else if (result.detaylar && key in result.detaylar) {
-        row[key] = result.detaylar[key]
-      } else {
-        row[key] = ''
+      // Resimleri yerleştir
+      if (Array.isArray(result.details?.images as string[])) {
+        result.details.images.forEach((image, index) => {
+          row[`Resim${index + 1}`] = image
+        })
       }
+
+      worksheet.addRow(row)
     })
 
-    // Resimleri yerleştir
-    if (Array.isArray(result.detaylar?.Resimler as string[])) {
-      result.detaylar.Resimler.forEach((image, index) => {
-        row[`Resim${index + 1}`] = image
-      })
-    }
-
-    worksheet.addRow(row)
+    // Anahtarları tarayarak verileri yerleştir
   })
 
   // Excel dosyasını yaz

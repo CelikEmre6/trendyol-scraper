@@ -36,38 +36,42 @@ async function fetchScriptContent(url: string) {
       }, {})
 
       const dictionary: any = {
-        basketCount: jsonObject.product.socialProof.basketCount || 'Belirtilmemiş',
-        pageViewCount: jsonObject.product.socialProof.pageViewCount || 'Belirtilmemiş',
-        favoriteCount: jsonObject.product.socialProof.favoriteCount || 'Belirtilmemiş',
-        tax: jsonObject.product.tax || 'Belirtilmemiş',
-        averageRating: jsonObject.product.ratingScore.averageRating || 'Belirtilmemiş',
-        totalRatingCount: jsonObject.product.ratingScore.totalRatingCount || 'Belirtilmemiş',
-        totalCommentCount: jsonObject.product.ratingScore.totalCommentCount || 'Belirtilmemiş',
-        brand: jsonObject.product.brand.name || 'Belirtilmemiş',
-        freeCargo: jsonObject.product.isFreeCargo || 'Belirtilmemiş',
+        SepetSayısı: jsonObject.product.socialProof.basketCount || 'Belirtilmemiş',
+        GoruntulenmeSayısı: jsonObject.product.socialProof.pageViewCount || 'Belirtilmemiş',
+        favoriSayısı: jsonObject.product.socialProof.favoriteCount || 'Belirtilmemiş',
+        vergi: jsonObject.product.tax || 'Belirtilmemiş',
+        ortalamaDegerlendirme: jsonObject.product.ratingScore.averageRating || 'Belirtilmemiş',
+        toplamDegerlendirmeSayısı:
+          jsonObject.product.ratingScore.totalRatingCount || 'Belirtilmemiş',
+        toplamYorumSayısı: jsonObject.product.ratingScore.totalCommentCount || 'Belirtilmemiş',
+        marka: jsonObject.product.brand.name || 'Belirtilmemiş',
+        bedavaKargo:
+          typeof jsonObject.product.isFreeCargo !== 'undefined'
+            ? jsonObject.product.isFreeCargo
+              ? 'bedava'
+              : 'değil'
+            : 'belirtilmemiş',
         attributes,
-        discountedPrice:
+        indirimliFiyati:
           jsonObject.product.variants[0].price.discountedPrice.value || 'Belirtilmemiş',
-        sellingPrice: jsonObject.product.variants[0].price.sellingPrice.value || 'Belirtilmemiş',
-        originalPrice: jsonObject.product.variants[0].price.originalPrice.value || 'Belirtilmemiş',
-        couponApplicablePrice:
+        SatisFiyati: jsonObject.product.variants[0].price.sellingPrice.value || 'Belirtilmemiş',
+        OrjinalFiyati: jsonObject.product.variants[0].price.originalPrice.value || 'Belirtilmemiş',
+        KuponluFiyatı:
           jsonObject.product.variants[0].price.couponApplicablePrice || 'Belirtilmemiş',
-        category: jsonObject.product.category.name || 'Belirtilmemiş',
-        categoryHierarchy: jsonObject.product.category.hierarchy || 'Belirtilmemiş',
-        name: jsonObject.product.name || 'Belirtilmemiş',
-        description: jsonObject.product.descriptions
+        Kategori: jsonObject.product.category.name || 'Belirtilmemiş',
+        KategoriHiyerarsi: jsonObject.product.category.hierarchy || 'Belirtilmemiş',
+        isim: jsonObject.product.name || 'Belirtilmemiş',
+        açıklama: jsonObject.product.descriptions
           .sort((a, b) => a.priority - b.priority)
           .map((description) => description.text)
           .join(' '),
-        images: jsonObject.product.images || [],
-        sizes: jsonObject.product.allVariants.reduce((acc, variant) => {
-          acc[variant.itemNumber] = {
-            value: variant.value,
-            barcode: variant.barcode,
-            inStock: variant.inStock
-          }
-          return acc
-        }, {})
+        images: (jsonObject.product.images || []).map((image) => `https://cdn.dsmcdn.com/${image}`),
+        sizes: jsonObject.product.allVariants.map((variant) => ({
+          itemNumber: variant.itemNumber,
+          beden: variant.value,
+          barcode: variant.barcode,
+          inStock: variant.inStock ? 'Stokta var' : 'Stokta yok'
+        }))
       }
       return dictionary
     } else {
@@ -92,7 +96,7 @@ export const getData = async (url: string, onProgress?: (progress: number) => vo
   //   pageUrl = url + '?pi='
   // }
   try {
-    for (let page = 1; page <= 10; page++) {
+    for (let page = 1; page <= 2; page++) {
       const response = await axios.get(
         `https://public.trendyol.com/discovery-web-searchgw-service/v2/api/infinite-scroll/erkek-gomlek-x-g2-c75?pi=${page}`
       )
@@ -215,249 +219,3 @@ export const getData = async (url: string, onProgress?: (progress: number) => vo
 
   return results
 }
-
-//     if (forceLoginEncountered) {
-//       console.log('Force login encountered, reopening browser...')
-//       forceLoginEncountered = false
-//     }
-//     let pagedUrl = ''
-//     if (url.includes('?')) {
-//       pagedUrl = `${url}&pagingOffset=${pageCount * 50}&pagingSize=50`
-//     } else {
-//       pagedUrl = `${url}?pagingOffset=${pageCount * 50}&pagingSize=50`
-//     }
-//     try {
-//       await page.goto(pagedUrl, {
-//         waitUntil: 'domcontentloaded'
-//       })
-//       await page.waitForSelector('.searchResultsFirstColumn', {
-//         timeout: 60000
-//       })
-
-//       const advertNotFound = await page.evaluate(() => {
-//         return document.body.innerText.includes('Arama filtrelerine uygun ilan bulunamadı.')
-//       })
-//       if (advertNotFound) {
-//         console.log('ilan bulunumadı')
-//         break
-//       }
-
-//       const data = await page.evaluate(() => {
-//         const rows = document.querySelectorAll('tr.searchResultsItem')
-//         const results: any[] = []
-
-//         rows.forEach((row) => {
-//           const titleElement = row.querySelector('a.classifiedTitle')
-//           const title = titleElement ? titleElement.getAttribute('title') : null
-//           const link = titleElement ? titleElement.getAttribute('href') : null
-
-//           const imageElement = row.querySelector('td.searchResultsLargeThumbnail img')
-//           const imageUrl = imageElement ? imageElement.getAttribute('src') : null
-
-//           const priceText =
-//             (
-//               row.querySelector(
-//                 'td.searchResultsPriceValue .classified-price-container span'
-//               ) as any
-//             )?.innerText.trim() || null
-//           const price = priceText ? priceText : null
-
-//           // const location =
-//           //   (row.querySelector('td.searchResultsLocationValue.true') as any)?.innerText.trim() ||
-//           //   null
-
-//           results.push({
-//             title,
-//             link: link ? `https://www.sahibinden.com${link}` : null,
-//             imageUrl,
-//             price
-//           })
-//         })
-
-//         return results
-//       })
-//       for (const item of data) {
-//         if (item.link) {
-//           try {
-//             // Detay sayfasına git ve gerekli bilgileri al
-//             await page.goto(item.link, {
-//               waitUntil: 'domcontentloaded'
-//             })
-
-//             await delay(1250)
-
-//             const pageNotFound = await page.evaluate(() => {
-//               return document.body.innerText.includes('Aradığınız sayfa artık bulunamıyor.')
-//             })
-
-//             const forceLogin = await page.evaluate(() => {
-//               return (
-//                 document.body.innerText.includes('giriş yapmanız gerekmektedir') ||
-//                 document.body.innerText.includes('you need to log in')
-//               )
-//             })
-
-//             if (pageNotFound) {
-//               console.log(`Aradığınız sayfa artık bulunamıyor: ${item.link}`)
-//               continue
-//             }
-
-//             if (forceLogin) {
-//               console.log(`Giriş yapmanız gerekmektedir: ${item.link}`)
-//               forceLoginEncountered = true
-//               break
-//             }
-
-//             await page.waitForSelector('.classifiedDetailTitle', {
-//               timeout: 10000
-//             })
-
-//             const details = await page.evaluate(() => {
-//               const listingData: ListingData = {}
-
-//               // `ul` etiketinin içindeki `li` etiketlerini bul
-//               const infoList = document.querySelector('ul.classifiedInfoList')
-//               if (infoList) {
-//                 const items = infoList.querySelectorAll('li')
-//                 if (items) {
-//                   items.forEach((item) => {
-//                     // `strong` etiketini bul ve kontrol et
-//                     const strongElement = item.querySelector('strong')
-//                     const spanElement = item.querySelector('span')
-
-//                     if (strongElement && spanElement) {
-//                       const key = strongElement.textContent?.trim().replace(':', '') || ''
-//                       const value = spanElement.textContent?.trim() || ''
-//                       // Anahtar-değer çiftini nesneye ekle
-//                       listingData[key] = value
-//                     }
-//                   })
-//                 }
-//               }
-//               let telefonNo = 'Belirtilmemiş'
-//               let isim = 'Belirtilmemiş'
-//               let sirket = 'Belirtilmemiş'
-
-//               // Kimden bilgisine göre telefon ve isim alıyoruz
-//               if (listingData.Kimden === 'Sahibinden') {
-//                 telefonNo =
-//                   document
-//                     .querySelector('#phoneInfoPart > li > span.pretty-phone-part.show-part > span')
-//                     ?.getAttribute('data-content') || 'Belirtilmemiş'
-
-//                 const isimElement = document.querySelector('.username-info-area h5 span')
-//                 if (isimElement) {
-//                   const isimStyleContent = window.getComputedStyle(isimElement, ':before').content
-//                   isim = isimStyleContent.replace(/["']/g, '') || 'Belirtilmemiş'
-//                 }
-//               } else if (listingData.Kimden) {
-//                 // Sahibinden değilse, kurumsal bilgileri al
-//                 const sirketElement = document.querySelector('.user-info-store-name a')
-//                 if (sirketElement) {
-//                   sirket = sirketElement.getAttribute('title') || 'Belirtilmemiş'
-//                 }
-
-//                 const isimElement = document.querySelector('.user-info-agent h3') as HTMLElement
-//                 if (isimElement) {
-//                   isim = isimElement.innerText.trim() || 'Belirtilmemiş'
-//                 }
-
-//                 const telefonElement = document.querySelector('.user-info-phones dd') as HTMLElement
-//                 if (telefonElement) {
-//                   telefonNo = telefonElement.innerText.trim() || 'Belirtilmemiş'
-//                 }
-//               } else {
-//                 telefonNo =
-//                   document
-//                     .querySelector('#phoneInfoPart > li > span.pretty-phone-part.show-part > span')
-//                     ?.getAttribute('data-content') || 'Belirtilmemiş'
-
-//                 const isimElement = document.querySelector('.username-info-area h5 span')
-//                 if (isimElement) {
-//                   const isimStyleContent = window.getComputedStyle(isimElement, ':before').content
-//                   isim = isimStyleContent.replace(/["']/g, '') || 'Belirtilmemiş'
-//                 }
-//               }
-//               const explanationElement = document.querySelector(
-//                 '#classifiedDescription'
-//               ) as HTMLElement
-//               const explanation = explanationElement ? explanationElement.innerText.trim() : ''
-
-//               const ilElement = document.querySelector(
-//                 '#classifiedDetail > div > div.classifiedDetailContent > div.classifiedInfo > h2 > a:nth-child(1)'
-//               ) as HTMLElement
-//               const il = ilElement ? ilElement.innerText : ''
-
-//               const ilceElement = document.querySelector(
-//                 '#classifiedDetail > div > div.classifiedDetailContent > div.classifiedInfo > h2 > a:nth-child(3)'
-//               ) as HTMLElement
-//               const ilce = ilceElement ? ilceElement.innerText : ''
-
-//               const mahElement = document.querySelector(
-//                 '#classifiedDetail > div > div.classifiedDetailContent > div.classifiedInfo > h2 > a:nth-child(5)'
-//               ) as HTMLElement
-//               const mahalle = mahElement ? mahElement.innerText : ''
-//               // Resim linklerini saklayacağımız bir dizi oluşturuyoruz
-//               const imageLinks: string[] = []
-
-//               // 'li' elemanlarını seçiyoruz
-//               const listItems = document.querySelectorAll('ul.classifiedDetailThumbList > li')
-
-//               // Her bir 'li' elemanını kontrol ediyoruz
-//               listItems.forEach((listItem) => {
-//                 // 'li' içindeki 'img' elemanlarını seçiyoruz
-//                 const img = listItem.querySelector('img') as HTMLImageElement | null
-//                 if (img && img.src) {
-//                   imageLinks.push(img.src.replace('thmb_', ''))
-//                 }
-//               })
-//               listingData['il'] = il
-//               listingData['ilce'] = ilce
-//               listingData['mahalle'] = mahalle
-//               listingData['Resimler'] = imageLinks
-//               listingData['TelefonNo'] = telefonNo
-//               listingData['Satıcı'] = isim
-//               listingData['Şirket'] = sirket
-//               listingData['Açıklama'] = explanation
-//               return listingData
-//             })
-//             item.il = details.il
-//             item.ilce = details.ilce
-//             item.location = details.mahalle
-//             delete details.il
-//             delete details.ilce
-//             delete details.mahalle
-//             item.detaylar = details
-
-//             await delay(Math.floor(Math.random() * 1000) + 2000)
-//           } catch (error) {
-//             console.log(`Error processing link ${item.link}:`, error)
-//             continue
-//           }
-//         }
-
-//         if (item.link) {
-//           allData.push(item)
-//         }
-
-//         if (allData.length >= 250) {
-//           break
-//         }
-//       }
-
-//       if (allData.length >= 250 || data.length < 50) {
-//         break
-//       }
-
-//       pageCount++
-//     } catch (error) {
-//       console.log(`Error navigating to page ${pagedUrl}:`, error)
-//     } finally {
-//       await browser.close()
-//       if (forceLoginEncountered) {
-//         continue
-//       }
-//     }
-//   }
-//   return allData.slice(0, 250)
-// }

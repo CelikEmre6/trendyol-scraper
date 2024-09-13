@@ -3,7 +3,7 @@ import { deleteSearchResultAtom, saveSearchResultsAtom } from '@renderer/store'
 import { Button, Table } from 'antd'
 import { useSetAtom } from 'jotai'
 
-export const History = () => {
+export const StockUpdate = () => {
   const { selectedSearch } = useSearchResultsTable()
   const deleteSearch = useSetAtom(deleteSearchResultAtom)
   const setSearchResults = useSetAtom(saveSearchResultsAtom)
