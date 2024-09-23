@@ -180,3 +180,5 @@ export const deleteSearchResultAtom = atom(null, async (get, set) => {
 
   set(selectedNoteIndexAtom, null)
 })
+
+export const stockLinksAtom = atom<string[]>([]) // Başlangıçta boş bir dizi

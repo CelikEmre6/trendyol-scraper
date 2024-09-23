@@ -15,6 +15,11 @@ import {
 declare global {
   interface Window {
     context: {
+      getSearchResults2(): SearchResults
+      loadStockLinks(): string[]
+      getSearchResultsStok(): unknown
+      saveStockLinks(jsonData: string): unknown
+      setStockLinksJson(newStockLinks: string[]): unknown
       locale: string
       getNotes: GetNotes
       readNote: ReadNote

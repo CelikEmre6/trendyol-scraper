@@ -7,8 +7,10 @@ import {
   getSearch,
   getSearchResults,
   getSettingsJson,
+  loadStockLinks,
   readNote,
   saveSearch,
+  saveStockLinks,
   solveCaptcha,
   writeNote,
   writeSettingsJson
@@ -106,6 +108,11 @@ app.whenReady().then(() => {
   ipcMain.handle('createExcelFile', (_, ...args: Parameters<SaveSearch>) =>
     createExcelFile(...args)
   )
+  ipcMain.handle('saveStockLinks', async (event, jsonData) => {
+    saveStockLinks(jsonData)
+  })
+  ipcMain.handle('loadStockLinks', () => loadStockLinks())
+
   ipcMain.handle('getSearchResults', async (event, ...args: Parameters<SearchResults>) => {
     return new Promise((resolve, reject) => {
       getSearchResults(...args, (progress) => {

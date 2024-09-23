@@ -243,6 +243,7 @@ export const getSearch: GetSearch = async () => {
   const search = searchFiles
     .filter((fileName) => fileName.endsWith('.json'))
     .filter((fileName) => fileName !== 'settings.json')
+    .filter((fileName) => fileName !== 'links.json')
 
   const data = search.map(async (fileName) => {
     const file = await readFile(`${rootDir}/${fileName}`, { encoding: fileEncoding })
@@ -372,4 +373,24 @@ export const createExcelFile: SaveSearch = async (jsonData) => {
     }
   })
   console.log(`Excel file created successfully at ${filePath}`)
+}
+
+export const saveStockLinks = async (links) => {
+  await writeFile(`${getRootDir()}/links.json`, links, {
+    encoding: fileEncoding
+  })
+  return links
+}
+export const loadStockLinks = async () => {
+  try {
+    const links = await readFile(`${getRootDir()}/links.json`, { encoding: fileEncoding })
+    return links
+      .replace(/[\[\]"]/g, '')
+      .replace(/,\s+/g, ', ')
+      .trim()
+      .split(',') // Satırları ayır ve dizide döndür
+  } catch (err) {
+    console.error('Dosya okunurken hata oluştu:', err)
+    throw err // Hata durumunda hatayı fırlat
+  }
 }

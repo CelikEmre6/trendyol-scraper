@@ -9,7 +9,7 @@ import { History } from './History'
 import { NotePreviewList } from './NotePreviewList'
 import { Search } from './Search'
 import { Settings } from './Settings'
-import { StockUpdate } from './StockUpdate'
+import { StockLinksComponent } from './StockLinks'
 export const RootLayout = ({ children, className, ...props }: ComponentProps<'main'>) => {
   return (
     <main className={twMerge('flex flex-row h-screen', className)} {...props}>
@@ -57,10 +57,10 @@ const items: TabsProps['items'] = [
   },
   {
     key: '4',
-    label: 'Stok Güncelleme',
+    label: 'Stok Linkleri',
     children: (
       <div className="w-full flex justify-start items-start h-[calc(100vh-42px)] px-8 pt-8">
-        <StockUpdate />
+        <StockLinksComponent />
       </div>
     )
   },

@@ -15,53 +15,51 @@ export const History = () => {
   const columns = [
     {
       title: 'Resim',
-      dataIndex: 'details',
-      key: 'image',
-      render: (details: { images: string[] }) => (
-        <img src={details.images[0]} alt="resim" width={50} height={50} />
-      ),
+      dataIndex: 'imageUrl',
+      key: 'imagUrl',
+      render: (text: string) => <img src={text} alt="resim" width={50} height={50} />,
       width: 60
     },
     {
-      title: 'Ürün Adı',
-      dataIndex: 'details',
-      key: 'name',
-      render: (details: { isim: string }) => details.isim,
+      title: 'Title',
+      dataIndex: 'title',
+      key: 'title',
       width: 250
     },
     {
-      title: 'URL',
-      dataIndex: 'link',
-      key: 'link',
-      render: (text: string) => (
-        <a href={text} target="_blank" rel="noopener noreferrer">
-          {text}
-        </a>
-      ),
+      title: 'm2',
+      dataIndex: 'm2',
+      key: 'm2',
       width: 100
     },
     {
       title: 'Fiyat',
-      dataIndex: 'details',
-      key: 'indirimliFiyati',
-      render: (details: { indirimliFiyati: number }) => details.indirimliFiyati,
-      width: 100,
-      sorter: (
-        a: { details: { indirimliFiyati: number } },
-        b: { details: { indirimliFiyati: number } }
-      ) => a.details.indirimliFiyati - b.details.indirimliFiyati
-    },
-    {
-      title: 'Marka',
-      dataIndex: 'details',
-      key: 'marka',
-      render: (details: { marka: string }) => details.marka,
+      dataIndex: 'price',
+      key: 'price',
       width: 100
     },
     {
-      title: 'Ürün Grubu',
-      dataIndex: 'gId',
-      key: 'gId',
+      title: 'm2 Fiyat',
+      dataIndex: 'pricePerM2',
+      key: 'pricePerM2',
+      width: 100
+    },
+    {
+      title: 'Konum',
+      dataIndex: 'location',
+      key: 'location',
+      width: 100
+    },
+    {
+      title: 'Ada No',
+      dataIndex: 'adaNo',
+      key: 'adaNo',
+      width: 100
+    },
+    {
+      title: 'Parsel No',
+      dataIndex: 'parselNo',
+      key: 'parselNo',
       width: 100
     }
   ]

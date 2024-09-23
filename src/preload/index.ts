@@ -50,6 +50,10 @@ try {
 
     getSearch: () => ipcRenderer.invoke('getSearch'),
 
+    saveStockLinks: (jsondata: string) => ipcRenderer.invoke('saveStockLinks', jsondata),
+
+    loadStockLinks: () => ipcRenderer.invoke('loadStockLinks'),
+
     deleteSearch: (date: Parameters<DeleteSearch>[0]) => ipcRenderer.invoke('deleteSearch', date),
 
     createExcelFile: (search: Parameters<SaveSearch>[0]) =>
