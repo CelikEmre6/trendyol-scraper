@@ -7,7 +7,6 @@ import { useEffect, useState } from 'react'
 export const StockLinksComponent = () => {
   const { stockLinks, handleUpdateStockLinks } = useStockLinks()
   const [links, setLinks] = useState('')
-  const [refresh, setRefresh] = useState(false) // New state to trigger refresh
   const setSearchResults = useSetAtom(saveSearchResultsAtom)
 
   useEffect(() => {
@@ -23,7 +22,7 @@ export const StockLinksComponent = () => {
     }
 
     loadLinks() // Load the links.json file when the component mounts
-  }, [refresh]) // Trigger useEffect when refresh state changes
+  })
 
   const handleChange = (e) => {
     const newLinks = e.target.value.split('\n')
@@ -44,8 +43,6 @@ export const StockLinksComponent = () => {
   const handleDataFetch = async () => {
     try {
       const data = await window.context.getSearchResults2(links)
-      // After fetching data, trigger a refresh by toggling the refresh state
-      setRefresh((prev) => !prev)
     } catch (error) {
       console.error(error)
     }

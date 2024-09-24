@@ -42,7 +42,7 @@ function createWindow(): void {
     autoHideMenuBar: true,
     ...(process.platform === 'linux' ? { icon } : {}),
     center: true,
-    title: 'Sahibinden Veri Çekme',
+    title: 'Trendyol Veri Çekme',
     frame: true,
     vibrancy: 'under-window',
     trafficLightPosition: {

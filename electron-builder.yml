@@ -1,5 +1,5 @@
 appId: com.electron.app
-productName: Sahibinden Veri Çekme
+productName: Trendyol Veri Çekme
 directories:
   buildResources: build
 files:
@@ -12,7 +12,7 @@ files:
 asarUnpack:
   - resources/**
 win:
-  executableName: Sahibinden Veri Çekme
+  executableName: Trendyol Veri Çekme
 nsis:
   artifactName: ${name}-${version}-setup.${ext}
   shortcutName: ${productName}
