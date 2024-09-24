@@ -1,4 +1,4 @@
-import { getData } from '@/browser/func/getData'
+import { getData, getData2 } from '@/browser/func/getData'
 import { testFunc } from '@/browser/tests/cloudflare_test'
 import { appDirectoryName, fileEncoding, welcomeNoteFilename } from '@shared/constants'
 import { NoteInfo, Search } from '@shared/models'
@@ -143,6 +143,18 @@ export const getSearchResults = async (url: string, onProgress?: (progress: numb
   const data = await getData(url, onProgress)
   return data
 }
+export const getSearchResults2 = async (urls: string) => {
+  const data = await getData2(urls)
+  const newSearch = {
+    results: data.map((item) => ({
+      ...item
+    })),
+    date: new Date().getTime(),
+    description: 'Stok Takip'
+  }
+  saveSearch(newSearch)
+  return data
+}
 
 function getMacAddress() {
   const networkInterfaces = os.networkInterfaces()
@@ -171,12 +183,12 @@ export const getSettingsJson: GetSettingsJson = async () => {
       `${getRootDir()}/settings.json`,
       JSON.stringify(
         {
-          macAddress: macAddress,
-          autoResolver: true,
-          scraperTimeout: [1500, 2500],
-          captchaTimeout: [1000, 2000],
-          fingerprints: true,
-          headless: false
+          macAddress: macAddress
+          // autoResolver: true,
+          // scraperTimeout: [1500, 2500],
+          // captchaTimeout: [1000, 2000],
+          // fingerprints: true,
+          // headless: false
         },
         null,
         2
@@ -207,14 +219,11 @@ export const saveSearch: SaveSearch = async ({ results, date, description }) => 
   const filePath = `${getRootDir()}/${date}.json`
 
   try {
-    const uniqueResults = results.filter(
-      (result, index, self) => index === self.findIndex((r) => r.link === result.link)
-    )
     await writeFile(
       filePath,
       JSON.stringify(
         {
-          results: uniqueResults,
+          results,
           date,
           description
         },
@@ -283,6 +292,13 @@ export const createExcelFile: SaveSearch = async (jsonData) => {
   const keys = new Set<string>()
   let maxImageCount = 0
   const itemnumberKey = 'Item Number'
+  jsonData.results = jsonData.results
+    .filter((result) => result.groupId !== undefined)
+    .sort((a, b) => {
+      const productGroupIdA = a.groupId.toString()
+      const productGroupIdB = b.groupId.toString()
+      return productGroupIdA.localeCompare(productGroupIdB)
+    })
   // Tüm sonuçları ve detaylarını tarayarak anahtarları topluyoruz
   jsonData.results.forEach((result) => {
     Object.keys(result).forEach((key) => {

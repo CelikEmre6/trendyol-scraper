@@ -3,17 +3,6 @@ import axios from 'axios'
 import cheerio from 'cheerio'
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-interface Product {
-  productId: number
-  url: string
-  details: any[]
-  productGroupId: number
-}
-
-interface GroupedProducts {
-  [productGroupId: number]: Product[]
-}
-
 async function fetchScriptContent(url: string) {
   try {
     const { data } = await axios.get(url)
@@ -36,43 +25,51 @@ async function fetchScriptContent(url: string) {
       }, {})
 
       const dictionary: any = {
-        SepetSayısı: jsonObject.product.socialProof.basketCount || 'Belirtilmemiş',
-        GoruntulenmeSayısı: jsonObject.product.socialProof.pageViewCount || 'Belirtilmemiş',
-        favoriSayısı: jsonObject.product.socialProof.favoriteCount || 'Belirtilmemiş',
-        vergi: jsonObject.product.tax || 'Belirtilmemiş',
-        ortalamaDegerlendirme: jsonObject.product.ratingScore.averageRating || 'Belirtilmemiş',
-        toplamDegerlendirmeSayısı:
-          jsonObject.product.ratingScore.totalRatingCount || 'Belirtilmemiş',
-        toplamYorumSayısı: jsonObject.product.ratingScore.totalCommentCount || 'Belirtilmemiş',
-        marka: jsonObject.product.brand.name || 'Belirtilmemiş',
-        bedavaKargo:
-          typeof jsonObject.product.isFreeCargo !== 'undefined'
-            ? jsonObject.product.isFreeCargo
-              ? 'bedava'
-              : 'değil'
-            : 'belirtilmemiş',
-        attributes,
-        indirimliFiyati:
-          jsonObject.product.variants[0].price.discountedPrice.value || 'Belirtilmemiş',
-        SatisFiyati: jsonObject.product.variants[0].price.sellingPrice.value || 'Belirtilmemiş',
-        OrjinalFiyati: jsonObject.product.variants[0].price.originalPrice.value || 'Belirtilmemiş',
-        KuponluFiyatı:
-          jsonObject.product.variants[0].price.couponApplicablePrice || 'Belirtilmemiş',
-        Kategori: jsonObject.product.category.name || 'Belirtilmemiş',
-        KategoriHiyerarsi: jsonObject.product.category.hierarchy || 'Belirtilmemiş',
-        isim: jsonObject.product.name || 'Belirtilmemiş',
-        açıklama: jsonObject.product.descriptions
-          .sort((a, b) => a.priority - b.priority)
-          .map((description) => description.text)
-          .join(' '),
-        images: (jsonObject.product.images || []).map((image) => `https://cdn.dsmcdn.com/${image}`),
-        sizes: jsonObject.product.allVariants.map((variant) => ({
-          itemNumber: variant.itemNumber,
-          beden: variant.value,
-          barcode: variant.barcode,
-          inStock: variant.inStock ? 'Stokta var' : 'Stokta yok'
-        }))
+        url: url,
+        groupId: jsonObject.product.productGroupId,
+        details: {
+          isim: jsonObject.product.name || 'Belirtilmemiş',
+          marka: jsonObject.product.brand.name || 'Belirtilmemiş',
+          Kategori: jsonObject.product.category.name || 'Belirtilmemiş',
+          KategoriHiyerarsi: jsonObject.product.category.hierarchy || 'Belirtilmemiş',
+          indirimliFiyati:
+            jsonObject.product.variants[0].price.discountedPrice.value || 'Belirtilmemiş',
+          SatisFiyati: jsonObject.product.variants[0].price.sellingPrice.value || 'Belirtilmemiş',
+          OrjinalFiyati:
+            jsonObject.product.variants[0].price.originalPrice.value || 'Belirtilmemiş',
+          KuponluFiyatı:
+            jsonObject.product.variants[0].price.couponApplicablePrice || 'Belirtilmemiş',
+          SepetSayısı: jsonObject.product.socialProof.basketCount || 'Belirtilmemiş',
+          GoruntulenmeSayısı: jsonObject.product.socialProof.pageViewCount || 'Belirtilmemiş',
+          favoriSayısı: jsonObject.product.socialProof.favoriteCount || 'Belirtilmemiş',
+          vergi: jsonObject.product.tax || 'Belirtilmemiş',
+          ortalamaDegerlendirme: jsonObject.product.ratingScore.averageRating || 'Belirtilmemiş',
+          toplamDegerlendirmeSayısı:
+            jsonObject.product.ratingScore.totalRatingCount || 'Belirtilmemiş',
+          toplamYorumSayısı: jsonObject.product.ratingScore.totalCommentCount || 'Belirtilmemiş',
+          bedavaKargo:
+            typeof jsonObject.product.isFreeCargo !== 'undefined'
+              ? jsonObject.product.isFreeCargo
+                ? 'bedava'
+                : 'bedava değil'
+              : 'belirtilmemiş',
+          attributes,
+          açıklama: jsonObject.product.descriptions
+            .sort((a, b) => a.priority - b.priority)
+            .map((description) => description.text)
+            .join(' '),
+          images: (jsonObject.product.images || []).map(
+            (image) => `https://cdn.dsmcdn.com/${image}`
+          ),
+          sizes: jsonObject.product.allVariants.map((variant) => ({
+            itemNumber: variant.itemNumber,
+            beden: variant.value,
+            barcode: variant.barcode,
+            inStock: variant.inStock ? 'Stokta var' : 'Stokta yok'
+          }))
+        }
       }
+
       return dictionary
     } else {
       console.log("No 'allVariants' found in the script.")
@@ -85,46 +82,38 @@ async function fetchScriptContent(url: string) {
 
 export const getData = async (url: string, onProgress?: (progress: number) => void) => {
   const allData: any[] = []
-  const groupedProducts: GroupedProducts = {}
-  // let pageUrl = ''
-  // if (url.includes('pi=')) {
-  //   return allData
-  // }
-  // if (url.includes('?')) {
-  //   pageUrl = url + '&pi='
-  // } else {
-  //   pageUrl = url + '?pi='
-  // }
+  const links: string[] = []
+  const productGroups: string[] = []
+  let pageUrl = ''
+  if (url.includes('pi=')) {
+    return allData
+  }
+  if (url.includes('?')) {
+    pageUrl = url + '&pi='
+  } else {
+    pageUrl = url + '?pi='
+  }
   try {
-    for (let page = 1; page <= 2; page++) {
-      const response = await axios.get(
-        `https://public.trendyol.com/discovery-web-searchgw-service/v2/api/infinite-scroll/erkek-gomlek-x-g2-c75?pi=${page}`
-      )
-      // const response = await axios.get(pageUrl + page)
+    for (let page = 1; page <= 50; page++) {
+      // const response = await axios.get(
+      //   `https://public.trendyol.com/discovery-web-searchgw-service/v2/api/infinite-scroll/erkek-kazak-x-g2-c1092?pi=${page}`
+      // )
+      const response = await axios.get(pageUrl + page)
       const data = response.data
       const products = data.result?.products || []
-      if (products.length == 0 || page == 60) {
-        break
-      }
 
       products.forEach((product: any) => {
         const groupId = product.productGroupId
-        if (!groupedProducts[groupId]) {
-          groupedProducts[groupId] = []
-        }
-        groupedProducts[groupId].push({
-          productId: product.id,
-          url: 'https://www.trendyol.com' + product.url,
-          details: [],
-          productGroupId: groupId
-        })
+        productGroups.push(groupId)
+        links.push('https://www.trendyol.com' + product.url)
       })
+      if (products.length < 24) {
+        break
+      }
     }
   } catch (error) {
     console.error('Data fetch error:', error)
   }
-
-  const groupedProductIds = Object.keys(groupedProducts)
 
   function chunkArray(arr: string[], size: number): string[][] {
     const chunks: string[][] = []
@@ -133,9 +122,8 @@ export const getData = async (url: string, onProgress?: (progress: number) => vo
     }
     return chunks
   }
-
-  const productGroupsChunks = chunkArray(groupedProductIds, 24)
-  const groupedProducts2: GroupedProducts = {}
+  const uniqueProductGroups = Array.from(new Set(productGroups))
+  const productGroupsChunks = chunkArray(uniqueProductGroups, 24)
 
   await Promise.all(
     productGroupsChunks.map(async (group) => {
@@ -150,15 +138,7 @@ export const getData = async (url: string, onProgress?: (progress: number) => vo
           const products = results[groupId] || []
 
           products.forEach((product: any) => {
-            if (!groupedProducts2[groupId]) {
-              groupedProducts2[groupId] = []
-            }
-            groupedProducts2[groupId].push({
-              productId: product.id,
-              url: 'https://www.trendyol.com' + product.url,
-              details: [],
-              productGroupId: groupId
-            })
+            links.push('https://www.trendyol.com' + product.url)
           })
         })
       } catch (error) {
@@ -167,55 +147,27 @@ export const getData = async (url: string, onProgress?: (progress: number) => vo
     })
   )
 
-  function addMissingGroupsToSecond(
-    groupedProducts1: GroupedProducts,
-    groupedProducts2: GroupedProducts
-  ): GroupedProducts {
-    const updatedGroupedProducts2 = { ...groupedProducts2 }
-
-    Object.keys(groupedProducts1).forEach((groupId) => {
-      if (!updatedGroupedProducts2[groupId]) {
-        updatedGroupedProducts2[groupId] = groupedProducts1[groupId]
-      }
-    })
-
-    return updatedGroupedProducts2
-  }
-
-  const updatedGroupedProducts2 = addMissingGroupsToSecond(groupedProducts, groupedProducts2)
+  const uniqueLinks = Array.from(new Set(links))
   let counter = 1
-  const leng = Object.values(updatedGroupedProducts2).reduce(
-    (sum, products) => sum + (products ? products.length : 0),
-    0
-  )
+  const leng = uniqueLinks.length
   // Fetch script content for all products
-  for (const groupId of Object.keys(updatedGroupedProducts2)) {
-    const products = updatedGroupedProducts2[groupId] || []
-    for (const product of products) {
-      product.details = await fetchScriptContent(product.url)
-      await new Promise((resolve) => setTimeout(resolve, 100)) // 300 ms bekleme
-      const progress = ((counter++ / leng) * 100).toFixed(2)
-      onProgress(parseFloat(progress))
-    }
+  for (const link of uniqueLinks) {
+    const result = await fetchScriptContent(link)
+    allData.push(result)
+    await new Promise((resolve) => setTimeout(resolve, 100)) // 300 ms bekleme
+    const progress = ((counter++ / leng) * 100).toFixed(2)
+    onProgress(parseFloat(progress))
   }
 
-  const results: any[] = []
-  Object.keys(updatedGroupedProducts2).forEach((groupId) => {
-    const productsSon = updatedGroupedProducts2[groupId] || []
+  return allData
+}
 
-    productsSon.forEach((product: any) => {
-      const id = product.id
-      const link = product.url
-      const details = product.details
-      const gId = product.productGroupId
-      results.push({
-        id,
-        link,
-        details,
-        gId
-      })
-    })
-  })
-
-  return results
+export const getData2 = async (urls: string) => {
+  const allData: any[] = []
+  for (const link of urls.split('\n')) {
+    const result = await fetchScriptContent(link)
+    allData.push(result)
+    await new Promise((resolve) => setTimeout(resolve, 100)) // 300 ms bekleme
+  }
+  return allData
 }

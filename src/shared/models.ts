@@ -1,7 +1,6 @@
 export type SearchResult = {
-  productId: number
+  groupId: string
   url: string
-  productGroupId: string
   details: string[]
 }
 

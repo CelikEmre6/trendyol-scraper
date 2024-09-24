@@ -27,7 +27,7 @@ export const Search = () => {
     <div className="w-full h-full flex flex-col items-center justify-center space-y-3 relative">
       <input
         type="text"
-        placeholder="Sahibinden Linki Giriniz"
+        placeholder="Trendyol Linki Giriniz"
         value={url}
         onChange={handleUrlChange}
         className="w-96 text-blue-500"
@@ -42,7 +42,7 @@ export const Search = () => {
                 ...item
               })),
               date: new Date().getTime(),
-              description: url
+              description: url.slice(url.indexOf('trendyol.com/') + 13)
             }
             await setSearchResults(newSearch)
             refresh()

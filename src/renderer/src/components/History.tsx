@@ -15,51 +15,63 @@ export const History = () => {
   const columns = [
     {
       title: 'Resim',
-      dataIndex: 'imageUrl',
-      key: 'imagUrl',
-      render: (text: string) => <img src={text} alt="resim" width={50} height={50} />,
+      key: 'image',
+      render: (record: any) => {
+        const imageUrl = record.details?.images?.[0] || 'placeholder-image-url'
+        return <img src={imageUrl} alt="resim" width={50} height={50} />
+      },
       width: 60
     },
     {
-      title: 'Title',
-      dataIndex: 'title',
-      key: 'title',
-      width: 250
+      title: 'İsim',
+      dataIndex: ['details', 'isim'],
+      key: 'details.isim',
+      render: (text: string) => {
+        const shortText = text.length > 20 ? `${text.slice(0, 20)}...` : text // 20 karakter ile sınırlandırıyoruz
+        return <span>{shortText}</span> // Kısaltılmış ismi gösteriyoruz
+      },
+      width: 100,
+      sorter: (a, b) => a.details.isim.localeCompare(b.details.isim) // Sıralama işlevi
     },
     {
-      title: 'm2',
-      dataIndex: 'm2',
-      key: 'm2',
+      title: 'Link',
+      dataIndex: 'url',
+      key: 'url',
+      render: (text: string) => {
+        const shortText = text.length > 30 ? `${text.slice(0, 20)}...` : text // Linki 30 karakter ile sınırlandırıyoruz
+        return (
+          <a href={text} target="_blank" rel="noopener noreferrer">
+            {shortText}
+          </a>
+        )
+      },
       width: 100
+    },
+    {
+      title: 'Grup ID',
+      dataIndex: 'groupId',
+      key: 'groupId',
+      width: 100,
+      sorter: (a, b) => a.groupId - b.groupId
     },
     {
       title: 'Fiyat',
-      dataIndex: 'price',
-      key: 'price',
-      width: 100
+      dataIndex: ['details', 'indirimliFiyati'],
+      key: 'indirimliFiyati',
+      width: 100,
+      sorter: (a, b) => a.details.indirimliFiyati - b.details.indirimliFiyati
     },
     {
-      title: 'm2 Fiyat',
-      dataIndex: 'pricePerM2',
-      key: 'pricePerM2',
-      width: 100
+      title: 'Marka',
+      dataIndex: ['details', 'marka'],
+      key: 'Marka',
+      width: 100,
+      sorter: (a, b) => a.details.isim.localeCompare(b.details.isim)
     },
     {
-      title: 'Konum',
-      dataIndex: 'location',
-      key: 'location',
-      width: 100
-    },
-    {
-      title: 'Ada No',
-      dataIndex: 'adaNo',
-      key: 'adaNo',
-      width: 100
-    },
-    {
-      title: 'Parsel No',
-      dataIndex: 'parselNo',
-      key: 'parselNo',
+      title: 'Kategori',
+      dataIndex: ['details', 'Kategori'],
+      key: 'Kategori',
       width: 100
     }
   ]

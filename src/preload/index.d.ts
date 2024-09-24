@@ -15,7 +15,6 @@ import {
 declare global {
   interface Window {
     context: {
-      getSearchResults2(): SearchResults
       loadStockLinks(): string[]
       getSearchResultsStok(): unknown
       saveStockLinks(jsonData: string): unknown
@@ -28,6 +27,7 @@ declare global {
       deleteNote: DeleteNote
       solveCaptcha: () => Promise<void>
       getSearchResults: SearchResults
+      getSearchResults2: SearchResults
       getSettingsJson: GetSettingsJson
       setSettingsJson: SetSettingsJson
       saveSearch: SaveSearch

@@ -1,25 +1,29 @@
 import { useStockLinks } from '@/hooks/useStockLinks'
+import { saveSearchResultsAtom } from '@renderer/store'
 import { Button, Input } from 'antd'
+import { useSetAtom } from 'jotai'
 import { useEffect, useState } from 'react'
 
 export const StockLinksComponent = () => {
   const { stockLinks, handleUpdateStockLinks } = useStockLinks()
   const [links, setLinks] = useState('')
+  const [refresh, setRefresh] = useState(false) // New state to trigger refresh
+  const setSearchResults = useSetAtom(saveSearchResultsAtom)
 
   useEffect(() => {
     const loadLinks = async () => {
       try {
         const loadedLinks = await window.context.loadStockLinks()
 
-        setLinks(loadedLinks.join('\n')) // Diziyi alt alta yaz
-        handleUpdateStockLinks(loadedLinks) // Stock links'i güncelle
+        setLinks(loadedLinks.join('\n')) // Write array on separate lines
+        handleUpdateStockLinks(loadedLinks) // Update stock links
       } catch (error) {
-        console.error('Hata:', error)
+        console.error('Error:', error)
       }
     }
 
-    loadLinks() // Bileşen yüklendiğinde links.json dosyasını yükle
-  }, [])
+    loadLinks() // Load the links.json file when the component mounts
+  }, [refresh]) // Trigger useEffect when refresh state changes
 
   const handleChange = (e) => {
     const newLinks = e.target.value.split('\n')
@@ -31,14 +35,20 @@ export const StockLinksComponent = () => {
     const jsonData = JSON.stringify(links.split('\n').filter((link) => link.trim() !== ''))
     try {
       const result = window.context.saveStockLinks(jsonData)
-      console.log('Sonuç:', result)
+      console.log('Result:', result)
     } catch (error) {
-      console.error('Hata:', error)
+      console.error('Error:', error)
     }
   }
 
-  const handleGetSearchResults = () => {
-    window.context.getSearchResults2() // Bu fonksiyonun uygulamanızda tanımlı olduğunu varsayıyorum
+  const handleDataFetch = async () => {
+    try {
+      const data = await window.context.getSearchResults2(links)
+      // After fetching data, trigger a refresh by toggling the refresh state
+      setRefresh((prev) => !prev)
+    } catch (error) {
+      console.error(error)
+    }
   }
 
   return (
@@ -47,7 +57,7 @@ export const StockLinksComponent = () => {
         <Button type="primary" onClick={handleSaveAsJson}>
           Kaydet
         </Button>
-        <Button type="primary" onClick={handleGetSearchResults}>
+        <Button type="primary" onClick={handleDataFetch}>
           Veri Al
         </Button>
       </div>

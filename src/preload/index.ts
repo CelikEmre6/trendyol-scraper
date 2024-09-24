@@ -38,6 +38,8 @@ try {
 
     getSearchResults: (url: Parameters<SearchResults>[0]) =>
       ipcRenderer.invoke('getSearchResults', url),
+    getSearchResults2: (urls: Parameters<SearchResults>[0]) =>
+      ipcRenderer.invoke('getSearchResults2', urls),
 
     solveCaptcha: () => ipcRenderer.invoke('solveCaptcha'),
 

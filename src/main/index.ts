@@ -6,6 +6,7 @@ import {
   getNotes,
   getSearch,
   getSearchResults,
+  getSearchResults2,
   getSettingsJson,
   loadStockLinks,
   readNote,
@@ -121,6 +122,9 @@ app.whenReady().then(() => {
         .then((data) => resolve(data)) // İşlem tamamlandığında veriyi frontend'e geri döndürür
         .catch((error) => reject(error)) // Hata olursa bunu yakalar
     })
+  })
+  ipcMain.handle('getSearchResults2', async (event, urls) => {
+    getSearchResults2(urls)
   })
 
   createWindow()
