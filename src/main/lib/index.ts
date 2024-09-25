@@ -145,14 +145,6 @@ export const getSearchResults = async (url: string, onProgress?: (progress: numb
 }
 export const getSearchResults2 = async (urls: string) => {
   const data = await getData2(urls)
-  const newSearch = {
-    results: data.map((item) => ({
-      ...item
-    })),
-    date: new Date().getTime(),
-    description: 'Stok Takip'
-  }
-  saveSearch(newSearch)
   return data
 }
 

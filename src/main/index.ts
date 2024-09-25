@@ -124,7 +124,11 @@ app.whenReady().then(() => {
     })
   })
   ipcMain.handle('getSearchResults2', async (event, urls) => {
-    getSearchResults2(urls)
+    return new Promise((resolve, reject) => {
+      getSearchResults2(urls)
+        .then((data) => resolve(data))
+        .catch((error) => reject(error))
+    })
   })
 
   createWindow()

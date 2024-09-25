@@ -97,7 +97,15 @@ export const History = () => {
           </Button>
         </div>
       </div>
-      <Table dataSource={selectedSearch?.results} columns={columns} />
+      <Table
+        rowKey={(record) => record.url}
+        dataSource={selectedSearch?.results}
+        columns={columns}
+        expandable={{
+          expandedRowRender: (record) => <p style={{ margin: 0 }}>{'test'}</p>,
+          rowExpandable: (record) => record.name !== 'Not Expandable'
+        }}
+      />
     </div>
   )
 }

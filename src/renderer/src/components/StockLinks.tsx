@@ -22,7 +22,7 @@ export const StockLinksComponent = () => {
     }
 
     loadLinks() // Load the links.json file when the component mounts
-  })
+  }, [])
 
   const handleChange = (e) => {
     const newLinks = e.target.value.split('\n')
@@ -43,6 +43,16 @@ export const StockLinksComponent = () => {
   const handleDataFetch = async () => {
     try {
       const data = await window.context.getSearchResults2(links)
+
+      const newSearch = {
+        results: data.map((item) => ({
+          ...item
+        })),
+        date: new Date().getTime(),
+        description: 'Stok Takip'
+      }
+
+      await setSearchResults(newSearch)
     } catch (error) {
       console.error(error)
     }
