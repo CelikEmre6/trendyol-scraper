@@ -49,7 +49,7 @@ export const StockLinksComponent = () => {
           ...item
         })),
         date: new Date().getTime(),
-        description: 'Stok Takip'
+        description: 'Tekli Ürün Çekme'
       }
 
       await setSearchResults(newSearch)

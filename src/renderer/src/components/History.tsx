@@ -72,6 +72,13 @@ export const History = () => {
       title: 'Kategori',
       dataIndex: ['details', 'Kategori'],
       key: 'Kategori',
+      width: 100,
+      sorter: (a, b) => a.details.Kategori.localeCompare(b.details.Kategori)
+    },
+    {
+      title: 'Renk',
+      dataIndex: ['details', 'attributes', 'Renk'],
+      key: 'Renk',
       width: 100
     }
   ]
@@ -102,7 +109,30 @@ export const History = () => {
         dataSource={selectedSearch?.results}
         columns={columns}
         expandable={{
-          expandedRowRender: (record) => <p style={{ margin: 0 }}>{'test'}</p>,
+          expandedRowRender: (record) => (
+            <Table
+              rowKey={(size) => size.itemNumber}
+              dataSource={record.details?.sizes}
+              columns={[
+                {
+                  title: 'itemNumber',
+                  dataIndex: 'itemNumber',
+                  key: 'itemNumber'
+                },
+                {
+                  title: 'Beden',
+                  dataIndex: 'beden',
+                  key: 'beden'
+                },
+                {
+                  title: 'Stok Durumu',
+                  dataIndex: 'inStock',
+                  key: 'inStock'
+                }
+              ]}
+              pagination={false} // Disable pagination for the nested table
+            />
+          ),
           rowExpandable: (record) => record.name !== 'Not Expandable'
         }}
       />

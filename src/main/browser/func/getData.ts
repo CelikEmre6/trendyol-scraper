@@ -86,19 +86,36 @@ export const getData = async (url: string, onProgress?: (progress: number) => vo
   const productGroups: string[] = []
   let pageUrl = ''
   if (url.includes('pi=')) {
-    return allData
-  }
-  if (url.includes('?')) {
-    pageUrl = url + '&pi='
+    pageUrl = url.split('pi=')[0] + 'pi='
   } else {
-    pageUrl = url + '?pi='
+    if (url.includes('?')) {
+      pageUrl = url + '&pi='
+    } else {
+      pageUrl = url + '?pi='
+    }
+  }
+  function getPathAfterTrendyol(url: string): string {
+    const baseUrl = 'trendyol.com/'
+    const index = url.indexOf(baseUrl)
+
+    if (index !== -1) {
+      return url.substring(index + baseUrl.length)
+    } else {
+      return 'none'
+    }
+  }
+  pageUrl = getPathAfterTrendyol(pageUrl)
+  if (pageUrl === 'none') {
+    return allData
   }
   try {
     for (let page = 1; page <= 50; page++) {
       // const response = await axios.get(
       //   `https://public.trendyol.com/discovery-web-searchgw-service/v2/api/infinite-scroll/erkek-kazak-x-g2-c1092?pi=${page}`
       // )
-      const response = await axios.get(pageUrl + page)
+      const response = await axios.get(
+        `https://public.trendyol.com/discovery-web-searchgw-service/v2/api/infinite-scroll/${pageUrl + page}`
+      )
       const data = response.data
       const products = data.result?.products || []
 
@@ -158,7 +175,6 @@ export const getData = async (url: string, onProgress?: (progress: number) => vo
     const progress = ((counter++ / leng) * 100).toFixed(2)
     onProgress(parseFloat(progress))
   }
-
   return allData
 }
 
