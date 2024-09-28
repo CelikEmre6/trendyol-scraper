@@ -1,6 +1,6 @@
 import { useSettings } from '@renderer/hooks/useSettings'
-import { licance_api_url } from '@shared/constants'
-import { ConfigProvider, Input, Tabs, TabsProps } from 'antd'
+import { appVersion, licance_api_url } from '@shared/constants'
+import { ConfigProvider, Input, Tabs, TabsProps, notification } from 'antd'
 import { ComponentProps, forwardRef, useEffect, useState } from 'react'
 import { Triangle } from 'react-loader-spinner'
 import { twMerge } from 'tailwind-merge'
@@ -80,6 +80,32 @@ export const Content = forwardRef<HTMLDivElement, ComponentProps<'div'>>(
     const [loading, setLoading] = useState(true)
     const { settings, handleUpdateSettings } = useSettings()
 
+    const checkVersion = async () => {
+      await fetch(licance_api_url + '/application/trendyol-scraper', {
+        method: 'GET'
+      })
+        .then((res) => {
+          return res.json()
+        })
+        .then((data) => {
+          console.log(data)
+          if (data.version !== appVersion) {
+            notification.open({
+              message: 'Uygulamanızın Daha Yeni Bir Sürümü Mevcut!',
+              description: (
+                <div>
+                  <p>
+                    Yeni sürümü indirmek için lütfen <a href={data.link}>buraya</a> tıklayınız
+                  </p>
+                </div>
+              ),
+              duration: 0,
+              placement: 'bottomRight'
+            })
+          }
+        })
+    }
+
     const validateLicense = async (key: string) => {
       return new Promise<boolean>((resolve, reject) => {
         fetch(licance_api_url + '/check', {
@@ -94,6 +120,7 @@ export const Content = forwardRef<HTMLDivElement, ComponentProps<'div'>>(
         }).then((res) => {
           if (res.status === 200) {
             resolve(true)
+            checkVersion().then()
           } else {
             reject(false)
           }

@@ -27,7 +27,7 @@ export const History = () => {
       dataIndex: ['details', 'isim'],
       key: 'details.isim',
       render: (text: string) => {
-        const shortText = text.length > 20 ? `${text.slice(0, 20)}...` : text // 20 karakter ile sınırlandırıyoruz
+        const shortText = text?.length > 20 ? `${text.slice(0, 20)}...` : text // 20 karakter ile sınırlandırıyoruz
         return <span>{shortText}</span> // Kısaltılmış ismi gösteriyoruz
       },
       width: 100,
@@ -38,7 +38,7 @@ export const History = () => {
       dataIndex: 'url',
       key: 'url',
       render: (text: string) => {
-        const shortText = text.length > 30 ? `${text.slice(0, 20)}...` : text // Linki 30 karakter ile sınırlandırıyoruz
+        const shortText = text?.length > 30 ? `${text.slice(0, 20)}...` : text // Linki 30 karakter ile sınırlandırıyoruz
         return (
           <a href={text} target="_blank" rel="noopener noreferrer">
             {shortText}
