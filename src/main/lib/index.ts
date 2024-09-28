@@ -295,8 +295,8 @@ export const createExcelFile: SaveSearch = async (jsonData) => {
     })
 
     if (result.details) {
-      if (result.details.sizes && result.details.sizes.length > 0) {
-        Object.keys(result.details.sizes[0]).forEach((key) => {
+      if ((result.details as any).sizes && (result.details as any).sizes.length > 0) {
+        Object.keys((result.details as any).sizes[0]).forEach((key) => {
           keys.add(key)
         })
       }
@@ -305,15 +305,15 @@ export const createExcelFile: SaveSearch = async (jsonData) => {
           keys.add(key)
         }
       })
-      if (result.details.attributes) {
-        Object.keys(result.details.attributes).forEach((key) => {
+      if ((result.details as any).attributes) {
+        Object.keys((result.details as any).attributes).forEach((key) => {
           keys.add(key)
         })
       }
 
       // Resimler alanının bir dizi olup olmadığını kontrol et
-      if (Array.isArray(result.details.images)) {
-        maxImageCount = Math.max(maxImageCount, result.details.images.length)
+      if (Array.isArray((result.details as any).images)) {
+        maxImageCount = Math.max(maxImageCount, (result.details as any).images.length)
       }
     }
   })
@@ -338,15 +338,18 @@ export const createExcelFile: SaveSearch = async (jsonData) => {
 
   // Verileri satır satır ekle
   jsonData.results.forEach((result) => {
-    result.details.sizes.forEach((size) => {
+    ;(result.details as any).sizes.forEach((size) => {
       const row: { [key: string]: string } = {}
       keys.forEach((key) => {
         if (key in result) {
           row[key] = result[key]
         } else if (result.details && key in result.details) {
           row[key] = result.details[key]
-        } else if (result.details.attributes && key in result.details.attributes) {
-          row[key] = result.details.attributes[key]
+        } else if (
+          (result.details as any).attributes &&
+          key in (result.details as any).attributes
+        ) {
+          row[key] = (result.details as any).attributes[key]
         } else if (size && key in size) {
           row[key] = size[key]
         } else {
@@ -355,8 +358,8 @@ export const createExcelFile: SaveSearch = async (jsonData) => {
       })
 
       // Resimleri yerleştir
-      if (Array.isArray(result.details?.images as string[])) {
-        result.details.images.forEach((image, index) => {
+      if (Array.isArray((result.details as any).images as string[])) {
+        ;(result.details as any).images.forEach((image, index) => {
           row[`Resim${index + 1}`] = image
         })
       }
@@ -388,7 +391,7 @@ export const loadStockLinks = async () => {
   try {
     const links = await readFile(`${getRootDir()}/links.json`, { encoding: fileEncoding })
     return links
-      .replace(/[\[\]"]/g, '')
+      .replace(/[\\[\]"]/g, '')
       .replace(/,\s+/g, ', ')
       .trim()
       .split(',') // Satırları ayır ve dizide döndür

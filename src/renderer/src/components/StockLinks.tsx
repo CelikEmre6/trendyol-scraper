@@ -81,7 +81,7 @@ export const StockLinksComponent = () => {
       <h1 className="text-lg font-bold">Ürün Linkleri</h1>
       <div className="flex flex-col space-y-3">
         <div className="flex flex-col space-y-2">
-          {linkCounter.map((link, index) => (
+          {linkCounter.map((link, _) => (
             <div className="flex items-center space-x-3" key={link.id}>
               <Input
                 value={link.link}

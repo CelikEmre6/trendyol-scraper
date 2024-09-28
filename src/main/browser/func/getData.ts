@@ -8,11 +8,11 @@ async function fetchScriptContent(url: string) {
     const { data } = await axios.get(url)
     const $ = cheerio.load(data)
     const scriptContents = $('script')
-      .map((i, el) => $(el).html())
+      .map((_, el) => $(el).html())
       .get()
     const matchingScript = scriptContents.find((content) => content?.includes('inStock'))
     const jsonRegex = /window\.__PRODUCT_DETAIL_APP_INITIAL_STATE__\s*=\s*(\{.*?\});/s
-    const match = matchingScript.match(jsonRegex)
+    const match = (matchingScript || '').match(jsonRegex)
 
     if (match) {
       const jsonString = match[1]
@@ -173,7 +173,9 @@ export const getData = async (url: string, onProgress?: (progress: number) => vo
     allData.push(result)
     await new Promise((resolve) => setTimeout(resolve, 100)) // 300 ms bekleme
     const progress = ((counter++ / leng) * 100).toFixed(2)
-    onProgress(parseFloat(progress))
+    if (typeof onProgress === 'function') {
+      onProgress(parseFloat(progress))
+    }
   }
   return allData
 }

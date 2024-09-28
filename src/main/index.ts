@@ -107,7 +107,7 @@ app.whenReady().then(() => {
   ipcMain.handle('createExcelFile', (_, ...args: Parameters<SaveSearch>) =>
     createExcelFile(...args)
   )
-  ipcMain.handle('saveStockLinks', async (event, jsonData) => {
+  ipcMain.handle('saveStockLinks', async (_, jsonData) => {
     saveStockLinks(jsonData)
   })
   ipcMain.handle('loadStockLinks', () => loadStockLinks())
@@ -121,7 +121,7 @@ app.whenReady().then(() => {
         .catch((error) => reject(error)) // Hata olursa bunu yakalar
     })
   })
-  ipcMain.handle('getSearchResults2', async (event, urls) => {
+  ipcMain.handle('getSearchResults2', async (_, urls) => {
     return new Promise((resolve, reject) => {
       getSearchResults2(urls)
         .then((data) => resolve(data))
