@@ -53,7 +53,8 @@ function createWindow(): void {
       sandbox: true,
       contextIsolation: true,
       webSecurity: false
-    }
+    },
+    icon: 'icon.ico'
   })
 
   mainWindow.on('ready-to-show', () => {

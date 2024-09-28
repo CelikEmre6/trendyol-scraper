@@ -278,7 +278,6 @@ export const createExcelFile: SaveSearch = async (jsonData) => {
 
   const keys = new Set<string>()
   let maxImageCount = 0
-  const itemnumberKey = 'Item Number'
   jsonData.results = jsonData.results
     .filter((result) => result.groupId !== undefined)
     .sort((a, b) => {
