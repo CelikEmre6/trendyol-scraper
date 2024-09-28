@@ -16,7 +16,7 @@ export const History = () => {
     {
       title: 'Resim',
       key: 'image',
-      render: (record: any) => {
+      render: (record) => {
         const imageUrl = record.details?.images?.[0] || 'placeholder-image-url'
         return <img src={imageUrl} alt="resim" width={50} height={50} />
       },
@@ -113,12 +113,12 @@ export const History = () => {
       <Table
         rowKey={(record) => record.url}
         dataSource={selectedSearch?.results}
-        columns={columns}
+        columns={columns as unknown as any}
         expandable={{
           expandedRowRender: (record) => (
             <Table
-              rowKey={(size) => size.itemNumber}
-              dataSource={record.details?.sizes}
+              rowKey={(size: any) => size.itemNumber}
+              dataSource={(record.details as any).sizes}
               columns={[
                 {
                   title: 'itemNumber',
@@ -139,7 +139,7 @@ export const History = () => {
               pagination={false} // Disable pagination for the nested table
             />
           ),
-          rowExpandable: (record) => record.name !== 'Not Expandable'
+          rowExpandable: (record: any) => record.name !== 'Not Expandable'
         }}
         style={{ userSelect: 'text' }}
       />

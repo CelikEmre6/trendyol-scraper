@@ -1,5 +1,4 @@
 import { getData, getData2 } from '@/browser/func/getData'
-import { testFunc } from '@/browser/tests/cloudflare_test'
 import { appDirectoryName, fileEncoding, welcomeNoteFilename } from '@shared/constants'
 import { NoteInfo, Search } from '@shared/models'
 import {
@@ -133,10 +132,6 @@ export const deleteNote: DeleteNote = async (filename) => {
   console.info(`Deleting note: ${filename}`)
   await remove(`${rootDir}/${filename}.md`)
   return true
-}
-
-export const solveCaptcha: () => Promise<void> = async () => {
-  await testFunc()
 }
 
 export const getSearchResults = async (url: string, onProgress?: (progress: number) => void) => {

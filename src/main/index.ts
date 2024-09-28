@@ -12,7 +12,6 @@ import {
   readNote,
   saveSearch,
   saveStockLinks,
-  solveCaptcha,
   writeNote,
   writeSettingsJson
 } from '@/lib'
@@ -36,8 +35,8 @@ import icon from '../../resources/icon.png?asset'
 function createWindow(): void {
   // Create the browser window.
   const mainWindow = new BrowserWindow({
-    width: 900,
-    height: 670,
+    width: 1280,
+    height: 900,
     show: false,
     autoHideMenuBar: true,
     ...(process.platform === 'linux' ? { icon } : {}),
@@ -98,7 +97,6 @@ app.whenReady().then(() => {
   // ipcMain.handle('getSearchResults', (_, ...args: Parameters<SearchResults>) =>
   //   getSearchResults(...args)
   // )
-  ipcMain.handle('solveCaptcha', () => solveCaptcha())
   ipcMain.handle('getSettingsJson', () => getSettingsJson())
   ipcMain.handle('setSettingsJson', (_, ...args: Parameters<SetSettingsJson>) =>
     writeSettingsJson(...args)

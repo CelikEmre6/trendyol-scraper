@@ -1,12 +1,9 @@
-import { useStockLinks } from '@/hooks/useStockLinks'
 import { saveSearchResultsAtom } from '@renderer/store'
 import { Button, Input } from 'antd'
 import { useSetAtom } from 'jotai'
 import { useEffect, useState } from 'react'
 
 export const StockLinksComponent = () => {
-  const { stockLinks, handleUpdateStockLinks } = useStockLinks()
-  const [links, setLinks] = useState('')
   const setSearchResults = useSetAtom(saveSearchResultsAtom)
   const [linkCounter, setLinkCounter] = useState([
     {
@@ -20,23 +17,28 @@ export const StockLinksComponent = () => {
       try {
         const loadedLinks = await window.context.loadStockLinks()
 
-        setLinks(loadedLinks.join('\n')) // Write array on separate lines
-        handleUpdateStockLinks(loadedLinks) // Update stock links
+        setLinkCounter(
+          loadedLinks.map((link, index) => ({
+            id: String(index + 1),
+            link
+          }))
+        )
       } catch (error) {
         console.error('Error:', error)
       }
     }
 
-    loadLinks() // Load the links.json file when the component mounts
+    loadLinks()
   }, [])
 
   const handleChange = (arr) => {
     const newLinks = arr.map((item) => item.link)
-    handleUpdateStockLinks(newLinks)
+    return newLinks
   }
 
   const handleSaveAsJson = async () => {
-    const jsonData = JSON.stringify(handleChange(linkCounter))
+    const data = handleChange(linkCounter)
+    const jsonData = JSON.stringify(data)
     try {
       const result = window.context.saveStockLinks(jsonData)
       console.log('Result:', result)
@@ -47,7 +49,9 @@ export const StockLinksComponent = () => {
 
   const handleDataFetch = async () => {
     try {
-      const data = await window.context.getSearchResults2(links)
+      const data = await window.context.getSearchResults2(
+        linkCounter.map((item) => item.link).join('\n')
+      )
 
       const newSearch = {
         results: data.map((item) => ({
@@ -78,15 +82,10 @@ export const StockLinksComponent = () => {
       <div className="flex flex-col space-y-3">
         <div className="flex flex-col space-y-2">
           {linkCounter.map((link, index) => (
-            <Input
-              key={link.id}
-              value={link.link}
-              onChange={(e) =>
-                // setLinkCounter((prev) => {
-                //   prev[index].link = e.target.value
-                //   return prev
-                // })
-                {
+            <div className="flex items-center space-x-3" key={link.id}>
+              <Input
+                value={link.link}
+                onChange={(e) => {
                   const newLink = linkCounter.map((item) => {
                     if (item.id === link.id) {
                       item.link = e.target.value
@@ -95,13 +94,19 @@ export const StockLinksComponent = () => {
                   })
 
                   setLinkCounter(newLink)
-                }
-              }
-            ></Input>
+                }}
+              />
+              <Button
+                danger
+                onClick={() => setLinkCounter(linkCounter.filter((item) => item.id !== link.id))}
+              >
+                Sil
+              </Button>
+            </div>
           ))}
           <Button
             onClick={() =>
-              setLinkCounter([...linkCounter, { id: String(linkCounter.length), link: '' }])
+              setLinkCounter([...linkCounter, { id: String(linkCounter.length + 1), link: '' }])
             }
           >
             Ekle{' '}
