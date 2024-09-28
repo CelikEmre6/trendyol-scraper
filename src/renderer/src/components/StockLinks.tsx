@@ -8,6 +8,12 @@ export const StockLinksComponent = () => {
   const { stockLinks, handleUpdateStockLinks } = useStockLinks()
   const [links, setLinks] = useState('')
   const setSearchResults = useSetAtom(saveSearchResultsAtom)
+  const [linkCounter, setLinkCounter] = useState([
+    {
+      id: '1',
+      link: ''
+    }
+  ])
 
   useEffect(() => {
     const loadLinks = async () => {
@@ -24,14 +30,13 @@ export const StockLinksComponent = () => {
     loadLinks() // Load the links.json file when the component mounts
   }, [])
 
-  const handleChange = (e) => {
-    const newLinks = e.target.value.split('\n')
-    setLinks(e.target.value)
+  const handleChange = (arr) => {
+    const newLinks = arr.map((item) => item.link)
     handleUpdateStockLinks(newLinks)
   }
 
   const handleSaveAsJson = async () => {
-    const jsonData = JSON.stringify(links.split('\n').filter((link) => link.trim() !== ''))
+    const jsonData = JSON.stringify(handleChange(linkCounter))
     try {
       const result = window.context.saveStockLinks(jsonData)
       console.log('Result:', result)
@@ -59,7 +64,7 @@ export const StockLinksComponent = () => {
   }
 
   return (
-    <div className="flex flex-col space-y-3 w-full h-full max-w-[80vw] p-3">
+    <div className="flex flex-col space-y-3 w-full h-full p-3">
       <div className="flex items-center justify-end space-x-3">
         <Button type="primary" onClick={handleSaveAsJson}>
           Kaydet
@@ -69,17 +74,46 @@ export const StockLinksComponent = () => {
         </Button>
       </div>
 
-      <h1 className="text-lg font-bold">Stok Linkleri</h1>
+      <h1 className="text-lg font-bold">Ürün Linkleri</h1>
       <div className="flex flex-col space-y-3">
         <div className="flex flex-col space-y-2">
-          <Input.TextArea
+          {linkCounter.map((link, index) => (
+            <Input
+              key={link.id}
+              value={link.link}
+              onChange={(e) =>
+                // setLinkCounter((prev) => {
+                //   prev[index].link = e.target.value
+                //   return prev
+                // })
+                {
+                  const newLink = linkCounter.map((item) => {
+                    if (item.id === link.id) {
+                      item.link = e.target.value
+                    }
+                    return item
+                  })
+
+                  setLinkCounter(newLink)
+                }
+              }
+            ></Input>
+          ))}
+          <Button
+            onClick={() =>
+              setLinkCounter([...linkCounter, { id: String(linkCounter.length), link: '' }])
+            }
+          >
+            Ekle{' '}
+          </Button>
+          {/* <Input.TextArea
             id="stock-links"
             rows={5}
             placeholder="Linkleri alt alta yazın"
             value={links}
             onChange={handleChange}
             style={{ width: '800px', height: '400px' }}
-          />
+          /> */}
         </div>
       </div>
     </div>

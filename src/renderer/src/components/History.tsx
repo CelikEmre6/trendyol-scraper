@@ -52,7 +52,8 @@ export const History = () => {
       dataIndex: 'groupId',
       key: 'groupId',
       width: 100,
-      sorter: (a, b) => a.groupId - b.groupId
+      sorter: (a, b) => a.groupId - b.groupId,
+      defaultSortOrder: 'ascend'
     },
     {
       title: 'Fiyat',
@@ -79,7 +80,12 @@ export const History = () => {
       title: 'Renk',
       dataIndex: ['details', 'attributes', 'Renk'],
       key: 'Renk',
-      width: 100
+      width: 100,
+      sorter: (a, b) => {
+        const renkA = a.details?.attributes?.Renk || '' // Fallback to an empty string if undefined
+        const renkB = b.details?.attributes?.Renk || ''
+        return renkA.localeCompare(renkB)
+      }
     }
   ]
 
@@ -135,6 +141,7 @@ export const History = () => {
           ),
           rowExpandable: (record) => record.name !== 'Not Expandable'
         }}
+        style={{ userSelect: 'text' }}
       />
     </div>
   )

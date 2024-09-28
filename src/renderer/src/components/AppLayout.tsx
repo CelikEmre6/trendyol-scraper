@@ -57,7 +57,7 @@ const items: TabsProps['items'] = [
   },
   {
     key: '4',
-    label: 'Stok Linkleri',
+    label: 'Ürün Linkleri',
     children: (
       <div className="w-full flex justify-start items-start h-[calc(100vh-42px)] px-8 pt-8">
         <StockLinksComponent />
