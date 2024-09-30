@@ -337,7 +337,41 @@ export const createExcelFile: SaveSearch = async (jsonData) => {
 
   // Verileri satır satır ekle
   jsonData.results.forEach((result) => {
-    ;(result.details as any).sizes.forEach((size) => {
+    // Check if sizes exist
+    const sizes = (result.details as any).sizes || []
+
+    if (sizes.length > 0) {
+      // If sizes exist, create a row for each size
+      sizes.forEach((size) => {
+        const row: { [key: string]: string } = {}
+        keys.forEach((key) => {
+          if (key in result) {
+            row[key] = result[key]
+          } else if (result.details && key in result.details) {
+            row[key] = result.details[key]
+          } else if (
+            (result.details as any).attributes &&
+            key in (result.details as any).attributes
+          ) {
+            row[key] = (result.details as any).attributes[key]
+          } else if (size && key in size) {
+            row[key] = size[key]
+          } else {
+            row[key] = ''
+          }
+        })
+
+        // Resimleri yerleştir
+        if (Array.isArray((result.details as any).images as string[])) {
+          ;(result.details as any).images.forEach((image, index) => {
+            row[`Resim${index + 1}`] = image
+          })
+        }
+
+        worksheet.addRow(row)
+      })
+    } else {
+      // If sizes do not exist, add a single row for the product
       const row: { [key: string]: string } = {}
       keys.forEach((key) => {
         if (key in result) {
@@ -349,8 +383,6 @@ export const createExcelFile: SaveSearch = async (jsonData) => {
           key in (result.details as any).attributes
         ) {
           row[key] = (result.details as any).attributes[key]
-        } else if (size && key in size) {
-          row[key] = size[key]
         } else {
           row[key] = ''
         }
@@ -364,9 +396,7 @@ export const createExcelFile: SaveSearch = async (jsonData) => {
       }
 
       worksheet.addRow(row)
-    })
-
-    // Anahtarları tarayarak verileri yerleştir
+    }
   })
 
   // Excel dosyasını yaz

@@ -32,6 +32,8 @@ async function fetchScriptContent(url: string) {
           marka: jsonObject.product.brand.name || 'Belirtilmemiş',
           Kategori: jsonObject.product.category.name || 'Belirtilmemiş',
           KategoriHiyerarsi: jsonObject.product.category.hierarchy || 'Belirtilmemiş',
+          saticiAdi: jsonObject.product.merchant.name || 'Belirtilmemiş',
+          saticiSehri: jsonObject.product.merchant.cityName || 'Belirtilmemiş',
           indirimliFiyati:
             jsonObject.product.variants[0].price.discountedPrice.value || 'Belirtilmemiş',
           SatisFiyati: jsonObject.product.variants[0].price.sellingPrice.value || 'Belirtilmemiş',
@@ -55,7 +57,7 @@ async function fetchScriptContent(url: string) {
               : 'belirtilmemiş',
           attributes,
           açıklama: jsonObject.product.descriptions
-            .sort((a, b) => a.priority - b.priority)
+            .filter((description) => description.priority === 0) // Filter for priority 0
             .map((description) => description.text)
             .join(' '),
           images: (jsonObject.product.images || []).map(
@@ -184,7 +186,9 @@ export const getData2 = async (urls: string) => {
   const allData: any[] = []
   for (const link of urls.split('\n')) {
     const result = await fetchScriptContent(link)
-    allData.push(result)
+    if (result.url && result.url.trim()) {
+      allData.push(result)
+    }
     await new Promise((resolve) => setTimeout(resolve, 100)) // 300 ms bekleme
   }
   return allData
