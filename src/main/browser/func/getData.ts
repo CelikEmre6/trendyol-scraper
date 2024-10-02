@@ -82,7 +82,7 @@ async function fetchScriptContent(url: string) {
   }
 }
 
-export const getData = async (url: string, onProgress?: (progress: number) => void) => {
+export const getData = async (url: string, onProgress?: (progress: string) => void) => {
   const allData: any[] = []
   const links: string[] = []
   const productGroups: string[] = []
@@ -110,8 +110,11 @@ export const getData = async (url: string, onProgress?: (progress: number) => vo
   if (pageUrl === 'none') {
     return allData
   }
+  if (typeof onProgress === 'function') {
+    onProgress('Ürün Linkleri Toplanıyor...')
+  }
   try {
-    for (let page = 1; page <= 50; page++) {
+    for (let page = 1; page <= 200; page++) {
       // const response = await axios.get(
       //   `https://public.trendyol.com/discovery-web-searchgw-service/v2/api/infinite-scroll/erkek-kazak-x-g2-c1092?pi=${page}`
       // )
@@ -176,8 +179,11 @@ export const getData = async (url: string, onProgress?: (progress: number) => vo
     await new Promise((resolve) => setTimeout(resolve, 100)) // 300 ms bekleme
     const progress = ((counter++ / leng) * 100).toFixed(2)
     if (typeof onProgress === 'function') {
-      onProgress(parseFloat(progress))
+      onProgress(`${progress}%`)
     }
+  }
+  if (typeof onProgress === 'function') {
+    onProgress('')
   }
   return allData
 }

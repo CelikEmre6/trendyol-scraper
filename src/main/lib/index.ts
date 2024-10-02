@@ -134,7 +134,7 @@ export const deleteNote: DeleteNote = async (filename) => {
   return true
 }
 
-export const getSearchResults = async (url: string, onProgress?: (progress: number) => void) => {
+export const getSearchResults = async (url: string, onProgress?: (progress: string) => void) => {
   const data = await getData(url, onProgress)
   return data
 }

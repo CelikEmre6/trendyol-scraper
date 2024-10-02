@@ -17,8 +17,7 @@ try {
   ipcRenderer.on('progress-update', (_, progress) => {
     const progressBar = document.getElementById('progressBar')
     if (progressBar) {
-      progressBar.style.width = `${progress}%`
-      progressBar.innerText = `${progress}%`
+      progressBar.innerText = `${progress}`
     }
   })
 
