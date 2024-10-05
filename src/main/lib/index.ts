@@ -1,6 +1,11 @@
 import { getData, getData2 } from '@/browser/func/getData'
-import { appDirectoryName, fileEncoding, welcomeNoteFilename } from '@shared/constants'
-import { NoteInfo, Search } from '@shared/models'
+import {
+  appDirectoryName,
+  fileEncoding,
+  licance_api_url,
+  welcomeNoteFilename
+} from '@shared/constants'
+import { NoteInfo, Search, TelegramSettings } from '@shared/models'
 import {
   CreateNote,
   DeleteNote,
@@ -18,6 +23,7 @@ import { dialog } from 'electron'
 import ExcelJS from 'exceljs'
 import { ensureDir, readFile, readdir, remove, stat, writeFile } from 'fs-extra'
 import { isEmpty } from 'lodash'
+import TelegramBot from 'node-telegram-bot-api'
 import os, { homedir } from 'os'
 import path from 'path'
 import welcomeNoteFile from '../../../resources/welcomeNote.md?asset'
@@ -135,14 +141,127 @@ export const deleteNote: DeleteNote = async (filename) => {
 }
 
 export const getSearchResults = async (url: string, onProgress?: (progress: string) => void) => {
+  const validLicence = await validateLicense()
+  if (!validLicence) {
+    return []
+  }
   const data = await getData(url, onProgress)
   return data
 }
-export const getSearchResults2 = async (urls: string) => {
-  const data = await getData2(urls)
-  return data
+class TelegramService {
+  private bot: TelegramBot | null = null
+  private chatId: string = ''
+
+  constructor(apiKey: string, chatId: string) {
+    if (apiKey) {
+      this.bot = new TelegramBot(apiKey, { polling: false })
+      this.chatId = chatId
+    }
+  }
+
+  async sendMessage(message: string): Promise<void> {
+    if (!this.bot || !this.chatId) {
+      throw new Error('Telegram bot or chatId is not configured.')
+    }
+
+    try {
+      await this.bot.sendMessage(this.chatId, message)
+      console.log('Message sent successfully')
+    } catch (error) {
+      console.error('Failed to send message:', error)
+    }
+  }
+}
+async function validateLicense() {
+  try {
+    const settings = await getSettingsJson()
+    const res = await fetch(licance_api_url + '/check', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        macAddress: settings?.macAddress,
+        key: settings?.licanceKey
+      })
+    })
+    await console.log(res)
+    if (res.status === 200) {
+      return true
+    } else {
+      return false
+    }
+  } catch (error) {
+    return false
+  }
 }
 
+export const getSearchResults2 = async (urls: string) => {
+  const validLicence = await validateLicense()
+  if (!validLicence) {
+    return []
+  }
+  const searches = await getSearch()
+  const StokSearches = searches.filter((search) => {
+    return search.description!.includes('Tekli Ürün Çekme')
+  })
+  const data = await getData2(urls)
+  if (StokSearches.length > 0) {
+    const lastSearch = StokSearches[StokSearches.length - 1]
+    compareStokSearches(lastSearch.results, data)
+  }
+
+  return data
+}
+async function compareStokSearches(lastSearch: any[], data: any[]) {
+  const settings = await getSettingsJson()
+  if (!settings.telegramApiKey || !settings.telegramChatId) {
+    return
+  }
+
+  const telegramSettings: TelegramSettings = {
+    apiKey: settings.telegramApiKey, // Replace with your actual API key
+    chatId: settings.telegramChatId // Replace with your actual chat ID
+  }
+
+  const telegramService = new TelegramService(telegramSettings.apiKey, telegramSettings.chatId)
+
+  // telegramService.sendMessage('Hello from your TypeScript bot!')
+  lastSearch.forEach((lastItem) => {
+    const matchingDataItem = data.find((item) => item.url === lastItem.url)
+
+    // Check for price changes
+    if (
+      matchingDataItem &&
+      lastItem.details.indirimliFiyati !== matchingDataItem.details.indirimliFiyati
+    ) {
+      const message =
+        `Different prices found for URL: ${lastItem.url}\n` +
+        `Last Search Price: ${lastItem.details.indirimliFiyati}\n` +
+        `New Search Price: ${matchingDataItem.details.indirimliFiyati}`
+      telegramService.sendMessage(message)
+    }
+
+    // Check for stock changes in sizes
+    if (matchingDataItem && lastItem.details.sizes) {
+      lastItem.details.sizes.forEach((lastSize) => {
+        const matchingSize = matchingDataItem.details.sizes.find(
+          (size) => size.itemNumber === lastSize.itemNumber
+        )
+
+        if (matchingSize && lastSize.inStock !== matchingSize.inStock) {
+          let stockMessage = `Stock change for item number: ${matchingDataItem.url}\n`
+          if (lastSize.beden && lastSize.beden.trim() !== '') {
+            stockMessage += `Last Search Size: ${lastSize.beden}\n`
+          }
+          stockMessage +=
+            `Last Search Stock: ${lastSize.inStock}\n` + `New Stock: ${matchingSize.inStock}`
+          telegramService.sendMessage(stockMessage)
+        }
+      })
+    }
+  })
+}
 function getMacAddress() {
   const networkInterfaces = os.networkInterfaces()
   for (const interfaceName in networkInterfaces) {
@@ -170,12 +289,10 @@ export const getSettingsJson: GetSettingsJson = async () => {
       `${getRootDir()}/settings.json`,
       JSON.stringify(
         {
-          macAddress: macAddress
-          // autoResolver: true,
-          // scraperTimeout: [1500, 2500],
-          // captchaTimeout: [1000, 2000],
-          // fingerprints: true,
-          // headless: false
+          macAddress: macAddress,
+          PageCount: 50,
+          ProductNumber: 1000,
+          variant: true
         },
         null,
         2
@@ -186,11 +303,7 @@ export const getSettingsJson: GetSettingsJson = async () => {
     )
     return {
       macAddress: macAddress,
-      autoResolver: true,
-      scraperTimeout: [1500, 2500],
-      captchaTimeout: [1000, 2000],
-      fingerprints: true,
-      headless: false
+      PageCount: 50
     }
   }
 }

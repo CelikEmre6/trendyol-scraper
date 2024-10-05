@@ -1,4 +1,5 @@
 /* eslint-disable no-unsafe-finally */
+import { getSettingsJson } from '@/lib'
 import axios from 'axios'
 import cheerio from 'cheerio'
 /* eslint-disable @typescript-eslint/no-explicit-any */
@@ -96,6 +97,7 @@ export const getData = async (url: string, onProgress?: (progress: string) => vo
       pageUrl = url + '?pi='
     }
   }
+
   function getPathAfterTrendyol(url: string): string {
     const baseUrl = 'trendyol.com/'
     const index = url.indexOf(baseUrl)
@@ -113,8 +115,12 @@ export const getData = async (url: string, onProgress?: (progress: string) => vo
   if (typeof onProgress === 'function') {
     onProgress('Ürün Linkleri Toplanıyor...')
   }
+  const settings = await getSettingsJson()
+  const pageNumber = settings.pageCount
+  const productNumber = settings.productNumber
+  const variant = settings.variant
   try {
-    for (let page = 1; page <= 200; page++) {
+    for (let page = 1; page <= pageNumber; page++) {
       // const response = await axios.get(
       //   `https://public.trendyol.com/discovery-web-searchgw-service/v2/api/infinite-scroll/erkek-kazak-x-g2-c1092?pi=${page}`
       // )
@@ -129,7 +135,7 @@ export const getData = async (url: string, onProgress?: (progress: string) => vo
         productGroups.push(groupId)
         links.push('https://www.trendyol.com' + product.url)
       })
-      if (products.length < 24) {
+      if (products.length < 24 || links.length >= productNumber) {
         break
       }
     }
@@ -144,30 +150,32 @@ export const getData = async (url: string, onProgress?: (progress: string) => vo
     }
     return chunks
   }
-  const uniqueProductGroups = Array.from(new Set(productGroups))
-  const productGroupsChunks = chunkArray(uniqueProductGroups, 24)
+  if (variant) {
+    const uniqueProductGroups = Array.from(new Set(productGroups))
+    const productGroupsChunks = chunkArray(uniqueProductGroups, 24)
 
-  await Promise.all(
-    productGroupsChunks.map(async (group) => {
-      const queryParams = group.map((id) => `productGroupIds=${id}`).join('&')
-      const url = `https://public.trendyol.com/discovery-web-websfxproductgroups-santral/api/v2/product-groups?${queryParams}`
+    await Promise.all(
+      productGroupsChunks.map(async (group) => {
+        const queryParams = group.map((id) => `productGroupIds=${id}`).join('&')
+        const url = `https://public.trendyol.com/discovery-web-websfxproductgroups-santral/api/v2/product-groups?${queryParams}`
 
-      try {
-        const response = await axios.get(url)
-        const results = response.data?.result || []
+        try {
+          const response = await axios.get(url)
+          const results = response.data?.result || []
 
-        Object.keys(results).forEach((groupId) => {
-          const products = results[groupId] || []
+          Object.keys(results).forEach((groupId) => {
+            const products = results[groupId] || []
 
-          products.forEach((product: any) => {
-            links.push('https://www.trendyol.com' + product.url)
+            products.forEach((product: any) => {
+              links.push('https://www.trendyol.com' + product.url)
+            })
           })
-        })
-      } catch (error) {
-        console.error('Data fetch error:', error)
-      }
-    })
-  )
+        } catch (error) {
+          console.error('Data fetch error:', error)
+        }
+      })
+    )
+  }
 
   const uniqueLinks = Array.from(new Set(links))
   let counter = 1

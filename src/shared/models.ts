@@ -24,15 +24,17 @@ export type NoteContent = string
 export type Settings = {
   macAddress: string
   licanceKey?: string
-  autoResolver: boolean
-  scraperTimeout: number[]
-  captchaTimeout: number[]
-  fingerprints: boolean
-  headless: boolean
-  proxy?: {
-    host: string
-    port: number
-    username: string
-    password: string
-  }
+  pageCount: number
+  productNumber: number
+  variant: boolean
+  telegramApiKey?: string
+  telegramChatId?: string
+}
+export type TelegramSettings = {
+  apiKey: string
+  chatId: string
+}
+
+export type MessagePayload = {
+  message: string
 }

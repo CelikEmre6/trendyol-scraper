@@ -79,7 +79,9 @@ export const StockLinksComponent = () => {
       </div>
 
       <h1 className="text-lg font-bold">Ürün Linkleri</h1>
-      <div className="flex flex-col space-y-3">
+
+      {/* Scrollable section */}
+      <div className="flex flex-col space-y-3" style={{ maxHeight: '500px', overflowY: 'auto' }}>
         <div className="flex flex-col space-y-2">
           {linkCounter.map((link, _) => (
             <div className="flex items-center space-x-3" key={link.id}>
@@ -104,22 +106,22 @@ export const StockLinksComponent = () => {
               </Button>
             </div>
           ))}
-          <Button
-            onClick={() =>
-              setLinkCounter([...linkCounter, { id: String(linkCounter.length + 1), link: '' }])
-            }
-          >
-            Ekle{' '}
-          </Button>
-          {/* <Input.TextArea
-            id="stock-links"
-            rows={5}
-            placeholder="Linkleri alt alta yazın"
-            value={links}
-            onChange={handleChange}
-            style={{ width: '800px', height: '400px' }}
-          /> */}
         </div>
+      </div>
+
+      {/* Ekle button outside the scrollable section */}
+      <div className="flex justify-start pt-3">
+        <Button
+          onClick={() => {
+            if (linkCounter.length < 1000) {
+              setLinkCounter([...linkCounter, { id: String(linkCounter.length + 1), link: '' }])
+            } else {
+              alert('En fazla 1000 link ekleyebilirsiniz!')
+            }
+          }}
+        >
+          Ekle
+        </Button>
       </div>
     </div>
   )

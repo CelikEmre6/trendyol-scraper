@@ -88,7 +88,6 @@ export const Content = forwardRef<HTMLDivElement, ComponentProps<'div'>>(
           return res.json()
         })
         .then((data) => {
-          console.log(data)
           if (data.version !== appVersion) {
             notification.open({
               message: 'Uygulamanızın Daha Yeni Bir Sürümü Mevcut!',
