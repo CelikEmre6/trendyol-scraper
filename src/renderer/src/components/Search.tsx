@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { saveSearchResultsAtom } from '@renderer/store'
-import { Button } from 'antd'
+import { Button, Tooltip } from 'antd'
 import { useSetAtom } from 'jotai'
 import { useState } from 'react'
 
@@ -32,29 +32,35 @@ export const Search = () => {
         onChange={handleUrlChange}
         className="w-96 text-blue-500"
       ></input>
-      <Button
-        className="w-96"
-        onClick={async () => {
-          try {
-            const data = await window.context.getSearchResults(url!)
-            const newSearch = {
-              results: data.map((item) => ({
-                ...item
-              })),
-              date: new Date().getTime(),
-              description: url.slice(url.indexOf('trendyol.com/') + 13)
-            }
-            await setSearchResults(newSearch)
-            refresh()
-          } catch (error) {
-            console.error(error)
-          }
-        }}
-        type="primary"
-        disabled={!url.includes('trendyol.com')} // Disable button if url is empty
+      <Tooltip
+        title={!url.includes('trendyol.com') ? 'Lütfen geçerli bir Trendyol linki giriniz.' : ''}
+        placement="bottom"
+        color="blue"
       >
-        Verileri Al
-      </Button>
+        <Button
+          className="w-96"
+          onClick={async () => {
+            try {
+              const data = await window.context.getSearchResults(url!)
+              const newSearch = {
+                results: data.map((item) => ({
+                  ...item
+                })),
+                date: new Date().getTime(),
+                description: url.slice(url.indexOf('trendyol.com/') + 13)
+              }
+              await setSearchResults(newSearch)
+              refresh()
+            } catch (error) {
+              console.error(error)
+            }
+          }}
+          type="primary"
+          disabled={!url.includes('trendyol.com')} // Disable button if url is empty
+        >
+          Verileri Al
+        </Button>
+      </Tooltip>
       <div className="width: 100%; background-color: #ddd;">
         <div id="progressBar" className="width: 0%; height: 30px; background-color: #4CAF50;"></div>
       </div>

@@ -185,7 +185,6 @@ async function validateLicense() {
         key: settings?.licanceKey
       })
     })
-    await console.log(res)
     if (res.status === 200) {
       return true
     } else {

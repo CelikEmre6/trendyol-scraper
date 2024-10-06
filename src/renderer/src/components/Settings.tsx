@@ -30,7 +30,7 @@ export const Settings = () => {
           <p>{settings?.licanceKey}</p>
         </div>
         <div className="flex flex-col space-y-2 min-w-[600px]">
-          <label htmlFor="scraper-timeout">Sayfa Sayısı</label>
+          <label htmlFor="scraper-timeout">Sayfa Sayısı: {settings?.pageCount} </label>
           <Slider
             id="scraper-timeout"
             min={10}
@@ -43,11 +43,12 @@ export const Settings = () => {
                 pageCount: value
               })
             }
-            tipFormatter={(value) => <span style={{ color: 'black' }}>{value}</span>}
+            // tipFormatter={(value) => <span style={{ color: 'black' }}>{value}</span>}
+            tipFormatter={null}
           />
         </div>
         <div className="flex flex-col space-y-2 min-w-[600px]">
-          <label htmlFor="scraper-timeout">Ürün Adedi</label>
+          <label htmlFor="scraper-timeout">Ürün Adedi : {settings?.productNumber}</label>
           <Slider
             id="scraper-timeout"
             min={100}
@@ -60,7 +61,8 @@ export const Settings = () => {
                 productNumber: value
               })
             }
-            tipFormatter={(value) => <span style={{ color: 'black' }}>{value}</span>}
+            // tipFormatter={(value) => <span style={{ color: 'black' }}>{value}</span>}
+            tipFormatter={null}
           />
         </div>
         <div className="flex flex-col space-y-2 min-w-[600px]">
@@ -73,7 +75,7 @@ export const Settings = () => {
               })
             }
           >
-            Varyantlar Kontrol Edilsin mi
+            Varyantlar Kontrol Edilsin mi ?
           </Checkbox>
         </div>
 
