@@ -30,24 +30,6 @@ export const Settings = () => {
           <p>{settings?.licanceKey}</p>
         </div>
         <div className="flex flex-col space-y-2 min-w-[600px]">
-          <label htmlFor="scraper-timeout">Sayfa Sayısı: {settings?.pageCount} </label>
-          <Slider
-            id="scraper-timeout"
-            min={10}
-            max={250}
-            step={5}
-            defaultValue={settings?.pageCount}
-            onChange={(value) =>
-              handleUpdateSettings({
-                ...settings!,
-                pageCount: value
-              })
-            }
-            // tipFormatter={(value) => <span style={{ color: 'black' }}>{value}</span>}
-            tipFormatter={null}
-          />
-        </div>
-        <div className="flex flex-col space-y-2 min-w-[600px]">
           <label htmlFor="scraper-timeout">Ürün Adedi : {settings?.productNumber}</label>
           <Slider
             id="scraper-timeout"

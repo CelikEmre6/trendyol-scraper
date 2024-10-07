@@ -24,7 +24,6 @@ export type NoteContent = string
 export type Settings = {
   macAddress: string
   licanceKey?: string
-  pageCount: number
   productNumber: number
   variant: boolean
   telegramApiKey?: string

@@ -116,11 +116,10 @@ export const getData = async (url: string, onProgress?: (progress: string) => vo
     onProgress('Ürün Linkleri Toplanıyor...')
   }
   const settings = await getSettingsJson()
-  const pageNumber = settings.pageCount
   const productNumber = settings.productNumber
   const variant = settings.variant
   try {
-    for (let page = 1; page <= pageNumber; page++) {
+    for (let page = 1; page <= 250; page++) {
       // const response = await axios.get(
       //   `https://public.trendyol.com/discovery-web-searchgw-service/v2/api/infinite-scroll/erkek-kazak-x-g2-c1092?pi=${page}`
       // )
@@ -130,11 +129,17 @@ export const getData = async (url: string, onProgress?: (progress: string) => vo
       const data = response.data
       const products = data.result?.products || []
 
-      products.forEach((product: any) => {
+      for (const product of products) {
         const groupId = product.productGroupId
         productGroups.push(groupId)
-        links.push('https://www.trendyol.com' + product.url)
-      })
+        if (!links.includes('https://www.trendyol.com' + product.url)) {
+          links.push('https://www.trendyol.com' + product.url)
+        }
+        if (links.length >= productNumber) {
+          break
+        }
+      }
+
       if (products.length < 24 || links.length >= productNumber) {
         break
       }
@@ -183,7 +188,9 @@ export const getData = async (url: string, onProgress?: (progress: string) => vo
   // Fetch script content for all products
   for (const link of uniqueLinks) {
     const result = await fetchScriptContent(link)
-    allData.push(result)
+    if (result.url && result.url.trim()) {
+      allData.push(result)
+    }
     await new Promise((resolve) => setTimeout(resolve, 100)) // 300 ms bekleme
     const progress = ((counter++ / leng) * 100).toFixed(2)
     if (typeof onProgress === 'function') {

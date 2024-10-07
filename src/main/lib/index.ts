@@ -1,10 +1,5 @@
 import { getData, getData2 } from '@/browser/func/getData'
-import {
-  appDirectoryName,
-  fileEncoding,
-  licance_api_url,
-  welcomeNoteFilename
-} from '@shared/constants'
+import { appDirectoryName, fileEncoding, welcomeNoteFilename } from '@shared/constants'
 import { NoteInfo, Search, TelegramSettings } from '@shared/models'
 import {
   CreateNote,
@@ -141,10 +136,6 @@ export const deleteNote: DeleteNote = async (filename) => {
 }
 
 export const getSearchResults = async (url: string, onProgress?: (progress: string) => void) => {
-  const validLicence = await validateLicense()
-  if (!validLicence) {
-    return []
-  }
   const data = await getData(url, onProgress)
   return data
 }
@@ -172,34 +163,8 @@ class TelegramService {
     }
   }
 }
-async function validateLicense() {
-  try {
-    const settings = await getSettingsJson()
-    const res = await fetch(licance_api_url + '/check', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        macAddress: settings?.macAddress,
-        key: settings?.licanceKey
-      })
-    })
-    if (res.status === 200) {
-      return true
-    } else {
-      return false
-    }
-  } catch (error) {
-    return false
-  }
-}
 
 export const getSearchResults2 = async (urls: string) => {
-  const validLicence = await validateLicense()
-  if (!validLicence) {
-    return []
-  }
   const searches = await getSearch()
   const StokSearches = searches.filter((search) => {
     return search.description!.includes('Tekli Ürün Çekme')
@@ -219,29 +184,26 @@ async function compareStokSearches(lastSearch: any[], data: any[]) {
   }
 
   const telegramSettings: TelegramSettings = {
-    apiKey: settings.telegramApiKey, // Replace with your actual API key
-    chatId: settings.telegramChatId // Replace with your actual chat ID
+    apiKey: settings.telegramApiKey,
+    chatId: settings.telegramChatId
   }
 
   const telegramService = new TelegramService(telegramSettings.apiKey, telegramSettings.chatId)
 
-  // telegramService.sendMessage('Hello from your TypeScript bot!')
   lastSearch.forEach((lastItem) => {
     const matchingDataItem = data.find((item) => item.url === lastItem.url)
 
-    // Check for price changes
     if (
       matchingDataItem &&
       lastItem.details.indirimliFiyati !== matchingDataItem.details.indirimliFiyati
     ) {
       const message =
-        `Different prices found for URL: ${lastItem.url}\n` +
-        `Last Search Price: ${lastItem.details.indirimliFiyati}\n` +
-        `New Search Price: ${matchingDataItem.details.indirimliFiyati}`
+        `Fiyat değişikliği: ${lastItem.url}\n` +
+        `Son Arama Fiyatı: ${lastItem.details.indirimliFiyati}\n` +
+        `Yeni Arama Fiyatı: ${matchingDataItem.details.indirimliFiyati}`
       telegramService.sendMessage(message)
     }
 
-    // Check for stock changes in sizes
     if (matchingDataItem && lastItem.details.sizes) {
       lastItem.details.sizes.forEach((lastSize) => {
         const matchingSize = matchingDataItem.details.sizes.find(
@@ -249,12 +211,12 @@ async function compareStokSearches(lastSearch: any[], data: any[]) {
         )
 
         if (matchingSize && lastSize.inStock !== matchingSize.inStock) {
-          let stockMessage = `Stock change for item number: ${matchingDataItem.url}\n`
+          let stockMessage = `Stok Değisikliği: ${matchingDataItem.url}\n`
           if (lastSize.beden && lastSize.beden.trim() !== '') {
-            stockMessage += `Last Search Size: ${lastSize.beden}\n`
+            stockMessage += `Bedeni: ${lastSize.beden}\n`
           }
           stockMessage +=
-            `Last Search Stock: ${lastSize.inStock}\n` + `New Stock: ${matchingSize.inStock}`
+            `Son Aramadaki Beden: ${lastSize.inStock}\n` + `Yeni Arama: ${matchingSize.inStock}`
           telegramService.sendMessage(stockMessage)
         }
       })
@@ -289,7 +251,6 @@ export const getSettingsJson: GetSettingsJson = async () => {
       JSON.stringify(
         {
           macAddress: macAddress,
-          PageCount: 50,
           ProductNumber: 1000,
           variant: true
         },
@@ -302,7 +263,8 @@ export const getSettingsJson: GetSettingsJson = async () => {
     )
     return {
       macAddress: macAddress,
-      PageCount: 50
+      ProductNumber: 1000,
+      variant: true
     }
   }
 }
@@ -397,7 +359,6 @@ export const createExcelFile: SaveSearch = async (jsonData) => {
       const productGroupIdB = b.groupId.toString()
       return productGroupIdA.localeCompare(productGroupIdB)
     })
-  // Tüm sonuçları ve detaylarını tarayarak anahtarları topluyoruz
   jsonData.results.forEach((result) => {
     Object.keys(result).forEach((key) => {
       if (key !== 'details') {
@@ -422,21 +383,18 @@ export const createExcelFile: SaveSearch = async (jsonData) => {
         })
       }
 
-      // Resimler alanının bir dizi olup olmadığını kontrol et
       if (Array.isArray((result.details as any).images)) {
         maxImageCount = Math.max(maxImageCount, (result.details as any).images.length)
       }
     }
   })
 
-  // Sütun başlıklarını dinamik olarak oluştur
   const columns = Array.from(keys).map((key: string) => ({
     header: key.charAt(0).toUpperCase() + key.slice(1),
     key: key,
     width: 20
   }))
 
-  // Resimler için ek sütunlar oluştur
   for (let i = 1; i <= maxImageCount; i++) {
     columns.push({
       header: `Resim${i}`,
@@ -447,13 +405,9 @@ export const createExcelFile: SaveSearch = async (jsonData) => {
 
   worksheet.columns = columns
 
-  // Verileri satır satır ekle
   jsonData.results.forEach((result) => {
-    // Check if sizes exist
     const sizes = (result.details as any).sizes || []
-
     if (sizes.length > 0) {
-      // If sizes exist, create a row for each size
       sizes.forEach((size) => {
         const row: { [key: string]: string } = {}
         keys.forEach((key) => {
@@ -473,7 +427,6 @@ export const createExcelFile: SaveSearch = async (jsonData) => {
           }
         })
 
-        // Resimleri yerleştir
         if (Array.isArray((result.details as any).images as string[])) {
           ;(result.details as any).images.forEach((image, index) => {
             row[`Resim${index + 1}`] = image
@@ -483,7 +436,6 @@ export const createExcelFile: SaveSearch = async (jsonData) => {
         worksheet.addRow(row)
       })
     } else {
-      // If sizes do not exist, add a single row for the product
       const row: { [key: string]: string } = {}
       keys.forEach((key) => {
         if (key in result) {
@@ -500,7 +452,6 @@ export const createExcelFile: SaveSearch = async (jsonData) => {
         }
       })
 
-      // Resimleri yerleştir
       if (Array.isArray((result.details as any).images as string[])) {
         ;(result.details as any).images.forEach((image, index) => {
           row[`Resim${index + 1}`] = image
@@ -511,7 +462,6 @@ export const createExcelFile: SaveSearch = async (jsonData) => {
     }
   })
 
-  // Excel dosyasını yaz
   const filePath = `${rootDir}/${jsonData.date}.xlsx`
   await workbook.xlsx.writeFile(filePath)
   exec(`start "" "${filePath}"`, (error) => {
@@ -535,9 +485,9 @@ export const loadStockLinks = async () => {
       .replace(/[\\[\]"]/g, '')
       .replace(/,\s+/g, ', ')
       .trim()
-      .split(',') // Satırları ayır ve dizide döndür
+      .split(',')
   } catch (err) {
     console.error('Dosya okunurken hata oluştu:', err)
-    throw err // Hata durumunda hatayı fırlat
+    throw err
   }
 }

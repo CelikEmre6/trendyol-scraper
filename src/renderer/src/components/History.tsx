@@ -118,7 +118,7 @@ export const History = () => {
           expandedRowRender: (record) => (
             <Table
               rowKey={(size: any) => size.itemNumber}
-              dataSource={(record.details as any).sizes}
+              dataSource={(record.details as any)?.sizes}
               columns={[
                 {
                   title: 'itemNumber',

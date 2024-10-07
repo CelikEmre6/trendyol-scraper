@@ -10,7 +10,7 @@ export const Search = () => {
   const [selectedUrl, setSelectedUrl] = useState(null)
 
   const [searchDescription, setSearchDescription] = useState('')
-
+  const [loading, setLoading] = useState(false)
   const setSearchResults = useSetAtom(saveSearchResultsAtom)
 
   const handleUrlChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -40,6 +40,7 @@ export const Search = () => {
         <Button
           className="w-96"
           onClick={async () => {
+            setLoading(true) // Disable the button
             try {
               const data = await window.context.getSearchResults(url!)
               const newSearch = {
@@ -53,10 +54,12 @@ export const Search = () => {
               refresh()
             } catch (error) {
               console.error(error)
+            } finally {
+              setLoading(false) // Re-enable the button
             }
           }}
           type="primary"
-          disabled={!url.includes('trendyol.com')} // Disable button if url is empty
+          disabled={!url.includes('trendyol.com') || loading} // Disable button if url is empty
         >
           Verileri Al
         </Button>
