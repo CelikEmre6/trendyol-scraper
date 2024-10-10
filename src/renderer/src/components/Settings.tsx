@@ -1,18 +1,21 @@
 import { useSettings } from '@renderer/hooks/useSettings'
 import { Button, Checkbox, Input, Slider } from 'antd'
 import { useState } from 'react'
-
 export const Settings = () => {
   const { settings, handleUpdateSettings } = useSettings()
   const [showTelegramFields, setShowTelegramFields] = useState(false)
   const [telegramApiKey, setTelegramApiKey] = useState(settings?.telegramApiKey || '')
   const [telegramChatId, setTelegramChatId] = useState(settings?.telegramChatId || '')
+  const [telegramStock, setTelegramStock] = useState(settings?.telegramStock || false)
+  const [telegramPrice, setTelegramPrice] = useState(settings?.telegramPrice || false)
 
-  const handleSaveTelegramSettings = () => {
+  const handleSaveTelegramSettings = async () => {
     handleUpdateSettings({
       ...settings!,
       telegramApiKey,
-      telegramChatId
+      telegramChatId,
+      telegramStock,
+      telegramPrice
     })
   }
 
@@ -85,6 +88,22 @@ export const Settings = () => {
                 onChange={(e) => setTelegramChatId(e.target.value)}
               />
             </div>
+            <div className="flex flex-col space-y-2 min-w-[600px]">
+              <Checkbox
+                checked={telegramStock}
+                onChange={(e) => setTelegramStock(e.target.checked)}
+              >
+                Stock Değişimleri Kontrol Edilsin mi ?
+              </Checkbox>
+            </div>
+            <div className="flex flex-col space-y-2 min-w-[600px]">
+              <Checkbox
+                checked={telegramPrice}
+                onChange={(e) => setTelegramPrice(e.target.checked)}
+              >
+                Fiyat Değişimleri Kontrol Edilsin mi ?
+              </Checkbox>
+            </div>
             <Button type="primary" onClick={handleSaveTelegramSettings}>
               Telegram Ayarlarını Kaydet
             </Button>
@@ -99,6 +118,12 @@ export const Settings = () => {
             </p>
             <p>
               <strong>Telegram Chat ID:</strong> {settings.telegramChatId}
+            </p>
+            <p>
+              <strong>Telegram Stok Kontrolü:</strong> {settings.telegramStock ? 'Evet' : 'Hayır'}
+            </p>
+            <p>
+              <strong>Telegram Fiyat Kontrolü:</strong> {settings.telegramPrice ? 'Evet' : 'Hayır'}
             </p>
           </div>
         )}

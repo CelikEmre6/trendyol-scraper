@@ -18,10 +18,10 @@ import { dialog } from 'electron'
 import ExcelJS from 'exceljs'
 import { ensureDir, readFile, readdir, remove, stat, writeFile } from 'fs-extra'
 import { isEmpty } from 'lodash'
-import TelegramBot from 'node-telegram-bot-api'
 import os, { homedir } from 'os'
 import path from 'path'
 import welcomeNoteFile from '../../../resources/welcomeNote.md?asset'
+import { TelegramService } from './Telegram'
 
 export const getRootDir = () => {
   return `${homedir()}/${appDirectoryName}`
@@ -139,30 +139,6 @@ export const getSearchResults = async (url: string, onProgress?: (progress: stri
   const data = await getData(url, onProgress)
   return data
 }
-class TelegramService {
-  private bot: TelegramBot | null = null
-  private chatId: string = ''
-
-  constructor(apiKey: string, chatId: string) {
-    if (apiKey) {
-      this.bot = new TelegramBot(apiKey, { polling: false })
-      this.chatId = chatId
-    }
-  }
-
-  async sendMessage(message: string): Promise<void> {
-    if (!this.bot || !this.chatId) {
-      throw new Error('Telegram bot or chatId is not configured.')
-    }
-
-    try {
-      await this.bot.sendMessage(this.chatId, message)
-      console.log('Message sent successfully')
-    } catch (error) {
-      console.error('Failed to send message:', error)
-    }
-  }
-}
 
 export const getSearchResults2 = async (urls: string) => {
   const searches = await getSearch()
@@ -179,7 +155,12 @@ export const getSearchResults2 = async (urls: string) => {
 }
 async function compareStokSearches(lastSearch: any[], data: any[]) {
   const settings = await getSettingsJson()
-  if (!settings.telegramApiKey || !settings.telegramChatId) {
+  if (
+    !settings.telegramApiKey ||
+    !settings.telegramChatId ||
+    settings.telegramApiKey === '' ||
+    settings.telegramChatId === ''
+  ) {
     return
   }
 
@@ -187,39 +168,48 @@ async function compareStokSearches(lastSearch: any[], data: any[]) {
     apiKey: settings.telegramApiKey,
     chatId: settings.telegramChatId
   }
-
+  const priceCheck = settings.telegramPrice
+  const stockCheck = settings.telegramStock
   const telegramService = new TelegramService(telegramSettings.apiKey, telegramSettings.chatId)
+  if ((await telegramService.verifyCredentials()) === false) {
+    return
+  }
 
+  if (!priceCheck && !stockCheck) {
+    return
+  }
   lastSearch.forEach((lastItem) => {
     const matchingDataItem = data.find((item) => item.url === lastItem.url)
-
-    if (
-      matchingDataItem &&
-      lastItem.details.indirimliFiyati !== matchingDataItem.details.indirimliFiyati
-    ) {
-      const message =
-        `Fiyat değişikliği: ${lastItem.url}\n` +
-        `Son Arama Fiyatı: ${lastItem.details.indirimliFiyati}\n` +
-        `Yeni Arama Fiyatı: ${matchingDataItem.details.indirimliFiyati}`
-      telegramService.sendMessage(message)
+    if (priceCheck) {
+      if (
+        matchingDataItem &&
+        lastItem.details.indirimliFiyati !== matchingDataItem.details.indirimliFiyati
+      ) {
+        const message =
+          `Fiyat değişikliği: ${lastItem.url}\n` +
+          `Son Arama Fiyatı: ${lastItem.details.indirimliFiyati}\n` +
+          `Yeni Arama Fiyatı: ${matchingDataItem.details.indirimliFiyati}`
+        telegramService.sendMessage(message)
+      }
     }
+    if (stockCheck) {
+      if (matchingDataItem && lastItem.details.sizes) {
+        lastItem.details.sizes.forEach((lastSize) => {
+          const matchingSize = matchingDataItem.details.sizes.find(
+            (size) => size.itemNumber === lastSize.itemNumber
+          )
 
-    if (matchingDataItem && lastItem.details.sizes) {
-      lastItem.details.sizes.forEach((lastSize) => {
-        const matchingSize = matchingDataItem.details.sizes.find(
-          (size) => size.itemNumber === lastSize.itemNumber
-        )
-
-        if (matchingSize && lastSize.inStock !== matchingSize.inStock) {
-          let stockMessage = `Stok Değisikliği: ${matchingDataItem.url}\n`
-          if (lastSize.beden && lastSize.beden.trim() !== '') {
-            stockMessage += `Bedeni: ${lastSize.beden}\n`
+          if (matchingSize && lastSize.inStock !== matchingSize.inStock) {
+            let stockMessage = `Stok Değisikliği: ${matchingDataItem.url}\n`
+            if (lastSize.beden && lastSize.beden.trim() !== '') {
+              stockMessage += `Bedeni: ${lastSize.beden}\n`
+            }
+            stockMessage +=
+              `Son Aramadaki Beden: ${lastSize.inStock}\n` + `Yeni Arama: ${matchingSize.inStock}`
+            telegramService.sendMessage(stockMessage)
           }
-          stockMessage +=
-            `Son Aramadaki Beden: ${lastSize.inStock}\n` + `Yeni Arama: ${matchingSize.inStock}`
-          telegramService.sendMessage(stockMessage)
-        }
-      })
+        })
+      }
     }
   })
 }

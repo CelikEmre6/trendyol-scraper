@@ -28,6 +28,8 @@ export type Settings = {
   variant: boolean
   telegramApiKey?: string
   telegramChatId?: string
+  telegramStock: boolean
+  telegramPrice: boolean
 }
 export type TelegramSettings = {
   apiKey: string

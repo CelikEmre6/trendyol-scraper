@@ -62,6 +62,7 @@ export const StockLinksComponent = () => {
       }
 
       await setSearchResults(newSearch)
+      alert('Veri Çekme Bitti. Veri Geçmiş Aramalara kaydedildi.')
     } catch (error) {
       console.error(error)
     }
