@@ -1,5 +1,5 @@
 import { saveSearchResultsAtom } from '@renderer/store'
-import { Button, Input } from 'antd'
+import { Button, Input, message } from 'antd'
 import { useSetAtom } from 'jotai'
 import { useEffect, useState } from 'react'
 
@@ -62,7 +62,7 @@ export const StockLinksComponent = () => {
       }
 
       await setSearchResults(newSearch)
-      alert('Veri Çekme Bitti. Veri Geçmiş Aramalara kaydedildi.')
+      message.success('Veri Alındı')
     } catch (error) {
       console.error(error)
     }

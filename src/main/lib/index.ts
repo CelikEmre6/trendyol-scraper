@@ -260,6 +260,15 @@ export const getSettingsJson: GetSettingsJson = async () => {
 }
 
 export const writeSettingsJson: SetSettingsJson = async (settings) => {
+  if (settings.telegramApiKey && settings.telegramApiKey !== '') {
+    const telegramService = new TelegramService(
+      settings.telegramApiKey,
+      settings.telegramChatId || ''
+    )
+    if ((await telegramService.verifyCredentials()) === false) {
+      throw new Error()
+    }
+  }
   await writeFile(`${getRootDir()}/settings.json`, JSON.stringify(settings, null, 2), {
     encoding: fileEncoding
   })
