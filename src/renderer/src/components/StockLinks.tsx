@@ -11,6 +11,7 @@ export const StockLinksComponent = () => {
       link: ''
     }
   ])
+  const [loading, setLoading] = useState(false) // Add loading state
 
   useEffect(() => {
     const loadLinks = async () => {
@@ -48,6 +49,8 @@ export const StockLinksComponent = () => {
   }
 
   const handleDataFetch = async () => {
+    setLoading(true) // Start loading
+    message.loading('Veriler Alınıyor')
     try {
       const data = await window.context.getSearchResults2(
         linkCounter.map((item) => item.link).join('\n')
@@ -65,16 +68,20 @@ export const StockLinksComponent = () => {
       message.success('Veri Alındı')
     } catch (error) {
       console.error(error)
+    } finally {
+      setLoading(false) // Stop loading
     }
   }
 
   return (
     <div className="flex flex-col space-y-3 w-full h-full p-3">
       <div className="flex items-center justify-end space-x-3">
-        <Button type="primary" onClick={handleSaveAsJson}>
+        <Button type="primary" onClick={handleSaveAsJson} disabled={loading}>
           Kaydet
         </Button>
-        <Button type="primary" onClick={handleDataFetch}>
+        <Button type="primary" onClick={handleDataFetch} disabled={loading}>
+          {' '}
+          {/* Disable when loading */}
           Veri Al
         </Button>
       </div>
@@ -102,6 +109,7 @@ export const StockLinksComponent = () => {
               <Button
                 danger
                 onClick={() => setLinkCounter(linkCounter.filter((item) => item.id !== link.id))}
+                disabled={loading}
               >
                 Sil
               </Button>
@@ -120,6 +128,7 @@ export const StockLinksComponent = () => {
               alert('En fazla 1000 link ekleyebilirsiniz!')
             }
           }}
+          disabled={loading}
         >
           Ekle
         </Button>

@@ -26,6 +26,8 @@ export type Settings = {
   licanceKey?: string
   productNumber: number
   variant: boolean
+  comment: boolean
+  commentNumber: number
   telegramApiKey?: string
   telegramChatId?: string
   telegramStock: boolean

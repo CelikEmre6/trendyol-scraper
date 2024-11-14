@@ -242,7 +242,9 @@ export const getSettingsJson: GetSettingsJson = async () => {
         {
           macAddress: macAddress,
           ProductNumber: 1000,
-          variant: true
+          variant: true,
+          comment: false,
+          commentNumber: 20
         },
         null,
         2
@@ -254,7 +256,9 @@ export const getSettingsJson: GetSettingsJson = async () => {
     return {
       macAddress: macAddress,
       ProductNumber: 1000,
-      variant: true
+      variant: true,
+      comment: false,
+      commentNumber: 20
     }
   }
 }

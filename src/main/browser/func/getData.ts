@@ -30,10 +30,12 @@ async function fetchScriptContent(url: string) {
         groupId: jsonObject.product.productGroupId,
         details: {
           isim: jsonObject.product.name || 'Belirtilmemiş',
+          productId: jsonObject.product.id || 'Belirtilmemiş',
           marka: jsonObject.product.brand.name || 'Belirtilmemiş',
           Kategori: jsonObject.product.category.name || 'Belirtilmemiş',
           KategoriHiyerarsi: jsonObject.product.category.hierarchy || 'Belirtilmemiş',
           saticiAdi: jsonObject.product.merchant.name || 'Belirtilmemiş',
+          saticiId: jsonObject.product.merchant.id || 'Belirtilmemiş',
           saticiSehri: jsonObject.product.merchant.cityName || 'Belirtilmemiş',
           indirimliFiyati:
             jsonObject.product.variants[0].price.discountedPrice.value || 'Belirtilmemiş',
@@ -71,6 +73,42 @@ async function fetchScriptContent(url: string) {
             inStock: variant.inStock ? 'Stokta var' : 'Stokta yok'
           }))
         }
+      }
+      const settings = await getSettingsJson()
+      const flag = settings.comment
+      const commentNumber = settings.commentNumber
+      if (flag) {
+        const yorumlar = [] as any // Initialize an empty array to store all comments
+        let commentUrl = ''
+        for (let i = 1; i <= Math.ceil(commentNumber / 50); i++) {
+          if (dictionary.details.toplamYorumSayısı < 50) {
+            commentUrl = `https://apigw.trendyol.com/discovery-web-websfxsocialreviewrating-santral/product-reviews-detailed?sellerId=${dictionary.details.saticiId}&contentId=${dictionary.details.productId}&pageSize=50&channelId=1`
+          } else {
+            commentUrl = `https://apigw.trendyol.com/discovery-web-websfxsocialreviewrating-santral/product-reviews-detailed?sellerId=${dictionary.details.saticiId}&contentId=${dictionary.details.productId}&pageSize=50&channelId=1&page=${i}`
+          }
+
+          const response = await axios.get(commentUrl)
+          const dataComment = response.data
+          const jsonObjectComment = dataComment.result.productReviews.content
+
+          // Push the mapped comments into the yorumlar array
+          yorumlar.push(
+            ...jsonObjectComment.map((review) => ({
+              yorum: review.comment,
+              puan: review.rate,
+              tarih: review.lastModifiedDate,
+              isElite: review.isElite,
+              isInfluencer: review.isInfluencer,
+              reviewLikeCount: review.reviewLikeCount
+            }))
+          )
+          if (jsonObjectComment.length < 50) {
+            break
+          }
+        }
+
+        // Assign the complete array to dictionary.details.yorumlar after the loop
+        dictionary.details.yorumlar = yorumlar
       }
 
       return dictionary

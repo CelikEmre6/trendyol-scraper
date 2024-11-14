@@ -64,6 +64,39 @@ export const Settings = () => {
           </Checkbox>
         </div>
 
+        <div className="flex flex-col space-y-2 min-w-[600px]">
+          <Checkbox
+            checked={settings?.comment}
+            onChange={(e) =>
+              handleUpdateSettings({
+                ...settings!,
+                comment: e.target.checked
+              })
+            }
+          >
+            Yorumlar Çekilsin mi ?
+          </Checkbox>
+        </div>
+
+        <div className="flex flex-col space-y-2 min-w-[600px]">
+          <label htmlFor="scraper-timeout">Yorum Sayısı : {settings?.commentNumber}</label>
+          <Slider
+            id="scraper-timeout"
+            min={50}
+            max={1000}
+            step={50}
+            defaultValue={settings?.commentNumber}
+            onChange={(value) =>
+              handleUpdateSettings({
+                ...settings!,
+                commentNumber: value
+              })
+            }
+            // tipFormatter={(value) => <span style={{ color: 'black' }}>{value}</span>}
+            tipFormatter={null}
+          />
+        </div>
+
         {/* Toggle button for Telegram fields */}
         <Button onClick={() => setShowTelegramFields(!showTelegramFields)}>
           {showTelegramFields ? 'Telegram Ayarlarını Gizle' : 'Telegram Ayarları Ekle'}
