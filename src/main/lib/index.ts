@@ -494,3 +494,37 @@ export const loadStockLinks = async () => {
     throw err
   }
 }
+
+export const loadStockLinksFromExcel = async (path: string, overWrite: boolean) => {
+  try {
+    const workbook = new ExcelJS.Workbook()
+    await workbook.xlsx.readFile(path)
+
+    const worksheet = workbook.worksheets[0]
+    let links: string[] = []
+
+    if (overWrite) {
+      const savedLinks = await loadStockLinks()
+
+      console.log('Saved links:', savedLinks)
+      links = savedLinks
+    }
+    for (let rowIndex = 1; rowIndex <= worksheet.rowCount; rowIndex++) {
+      const link = worksheet.getRow(rowIndex).getCell(1).value?.toString().trim()
+      if (link && !links.includes(link) && link.includes('trendyol.com')) {
+        links.push(link)
+      }
+      if (links.length === 1000) {
+        break
+      }
+    }
+
+    console.log('Links:', links)
+    await saveStockLinks(links.join(','))
+
+    return links
+  } catch (err) {
+    console.error('Dosya okunurken hata oluştu:', err)
+    throw err
+  }
+}

@@ -16,6 +16,7 @@ declare global {
   interface Window {
     context: {
       loadStockLinks(): string[]
+      loadStockLinksFromExcel(path: string, overWrite: boolean): string[]
       getSearchResultsStok(): unknown
       saveStockLinks(jsonData: string): unknown
       setStockLinksJson(newStockLinks: string[]): unknown

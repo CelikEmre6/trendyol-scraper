@@ -15,3 +15,4 @@ export type SaveSearch = (search: Search) => Promise<void>
 // Tüm aramaları alma işlemi için güncellenmiş tip
 export type GetSearch = () => Promise<Search[]>
 export type DeleteSearch = (date: string) => Promise<boolean>
+export type loadStockLinksFromExcel = (path: string, overWrite: boolean) => Promise<string[]>

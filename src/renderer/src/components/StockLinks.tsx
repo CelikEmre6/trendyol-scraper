@@ -1,5 +1,5 @@
 import { saveSearchResultsAtom } from '@renderer/store'
-import { Button, Input, message } from 'antd'
+import { Button, Input, message, Modal } from 'antd'
 import { useSetAtom } from 'jotai'
 import { useEffect, useState } from 'react'
 
@@ -12,6 +12,9 @@ export const StockLinksComponent = () => {
     }
   ])
   const [loading, setLoading] = useState(false) // Add loading state
+  const [isModalVisible, setIsModalVisible] = useState(false)
+  const [filePath, setFilePath] = useState<string | null>(null)
+  const [overwrite, setOverwrite] = useState<boolean>(false)
 
   useEffect(() => {
     const loadLinks = async () => {
@@ -32,6 +35,43 @@ export const StockLinksComponent = () => {
     loadLinks()
   }, [])
 
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    try {
+      const file = e.target?.files?.[0]
+      if (!file) return
+
+      console.log('Seçilen dosya:', (file as any).path)
+      setFilePath((file as any).path)
+
+      // Modalı aç
+      setIsModalVisible(true)
+    } catch (error) {
+      console.error(error)
+    }
+  }
+
+  const handleModalConfirm = async (overwrite: boolean) => {
+    try {
+      if (!filePath) return
+      setLoading(true)
+
+      // Kullanıcının seçimine göre overwrite (true/false)
+      const data = await window.context.loadStockLinksFromExcel(filePath, overwrite)
+      console.log('Dosya işlendi:', data)
+      window.location.reload()
+    } catch (error) {
+      console.error(error)
+    } finally {
+      setLoading(false)
+      setIsModalVisible(false)
+    }
+  }
+
+  const handleModalCancel = () => {
+    setIsModalVisible(false)
+    setFilePath(null)
+  }
+
   const handleChange = (arr) => {
     const newLinks = arr.map((item) => item.link)
     return newLinks
@@ -42,7 +82,7 @@ export const StockLinksComponent = () => {
     const jsonData = JSON.stringify(data)
     try {
       const result = window.context.saveStockLinks(jsonData)
-      console.log('Result:', result)
+      message.success('Linkler Kaydedildi')
     } catch (error) {
       console.error('Error:', error)
     }
@@ -76,6 +116,51 @@ export const StockLinksComponent = () => {
   return (
     <div className="flex flex-col space-y-3 w-full h-full p-3">
       <div className="flex items-center justify-end space-x-3">
+        <input
+          type="file"
+          id="fileInput"
+          accept=".xlsx, .xls"
+          style={{ display: 'none' }}
+          onChange={handleFileChange}
+        />
+
+        <Button
+          disabled={loading}
+          onClick={() => {
+            document.getElementById('fileInput')?.click()
+          }}
+          type="primary"
+        >
+          Excelden Aktar
+        </Button>
+
+        {/* Overwrite Modal */}
+        <Modal
+          title="Veri Üzerine Yazma Onayı"
+          visible={isModalVisible}
+          onCancel={handleModalCancel}
+          footer={[
+            <Button
+              key="no"
+              onClick={() => handleModalConfirm(false)} // Overwrite false
+            >
+              Hayır
+            </Button>,
+            <Button
+              key="yes"
+              type="primary"
+              onClick={() => handleModalConfirm(true)} // Overwrite true
+            >
+              Evet
+            </Button>
+          ]}
+        >
+          <p>
+            Kayıtlı olan linklerin üzerine yazılsın mı? Hayır işaretlerseniz sadece Exceldeki
+            linkler kaydedilecek
+          </p>
+        </Modal>
+
         <Button type="primary" onClick={handleSaveAsJson} disabled={loading}>
           Kaydet
         </Button>

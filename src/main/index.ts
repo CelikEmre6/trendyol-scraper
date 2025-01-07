@@ -9,6 +9,7 @@ import {
   getSearchResults2,
   getSettingsJson,
   loadStockLinks,
+  loadStockLinksFromExcel,
   readNote,
   saveSearch,
   saveStockLinks,
@@ -110,6 +111,10 @@ app.whenReady().then(() => {
   )
   ipcMain.handle('saveStockLinks', async (_, jsonData) => {
     saveStockLinks(jsonData)
+  })
+
+  ipcMain.handle('loadStockLinksFromExcel', async (_, path, overWrite) => {
+    loadStockLinksFromExcel(path, overWrite)
   })
   ipcMain.handle('loadStockLinks', () => loadStockLinks())
 
