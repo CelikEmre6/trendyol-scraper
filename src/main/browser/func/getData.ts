@@ -162,7 +162,7 @@ export const getData = async (url: string, onProgress?: (progress: string) => vo
       //   `https://public.trendyol.com/discovery-web-searchgw-service/v2/api/infinite-scroll/erkek-kazak-x-g2-c1092?pi=${page}`
       // )
       const response = await axios.get(
-        `https://public.trendyol.com/discovery-web-searchgw-service/v2/api/infinite-scroll/${pageUrl + page}`
+        `https://apigw.trendyol.com/discovery-web-searchgw-service/v2/api/infinite-scroll/${pageUrl + page}`
       )
       const data = response.data
       const products = data.result?.products || []
@@ -175,7 +175,7 @@ export const getData = async (url: string, onProgress?: (progress: string) => vo
         }
         if (links.length >= productNumber) {
           break
-        }
+        } //https://apigw.trendyol.com/discovery-web-searchgw-service/v2/api/infinite-scroll/erkek-t-shirt-x-g2-c73?pi=1
       }
 
       if (products.length < 24 || links.length >= productNumber) {
@@ -200,7 +200,7 @@ export const getData = async (url: string, onProgress?: (progress: string) => vo
     await Promise.all(
       productGroupsChunks.map(async (group) => {
         const queryParams = group.map((id) => `productGroupIds=${id}`).join('&')
-        const url = `https://public.trendyol.com/discovery-web-websfxproductgroups-santral/api/v2/product-groups?${queryParams}`
+        const url = `https://apigw.trendyol.com/discovery-web-websfxproductgroups-santral/api/v2/product-groups?${queryParams}`
 
         try {
           const response = await axios.get(url)

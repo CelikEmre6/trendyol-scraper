@@ -90,7 +90,11 @@ export const StockLinksComponent = () => {
 
   const handleDataFetch = async () => {
     setLoading(true) // Start loading
-    message.loading('Veriler Alınıyor')
+    message.loading({
+      content: 'Veriler Alınıyor',
+      key: 'TekilUrun'
+    })
+
     try {
       const data = await window.context.getSearchResults2(
         linkCounter.map((item) => item.link).join('\n')
@@ -105,9 +109,16 @@ export const StockLinksComponent = () => {
       }
 
       await setSearchResults(newSearch)
-      message.success('Veri Alındı')
+      message.success({
+        content: 'Veriler Alındı',
+        key: 'TekilUrun'
+      })
     } catch (error) {
       console.error(error)
+      message.error({
+        content: 'Veriler Alınamadı',
+        key: 'TekilUrun'
+      })
     } finally {
       setLoading(false) // Stop loading
     }
