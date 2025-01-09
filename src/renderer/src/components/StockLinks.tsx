@@ -113,6 +113,7 @@ export const StockLinksComponent = () => {
         content: 'Veriler Alındı',
         key: 'TekilUrun'
       })
+      window.location.reload()
     } catch (error) {
       console.error(error)
       message.error({

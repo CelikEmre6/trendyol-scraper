@@ -28,14 +28,13 @@ export type Settings = {
   variant: boolean
   comment: boolean
   commentNumber: number
-  telegramApiKey?: string
-  telegramChatId?: string
-  telegramStock: boolean
-  telegramPrice: boolean
+  telegramSettings?: TelegramSettings
 }
 export type TelegramSettings = {
   apiKey: string
   chatId: string
+  stock: boolean
+  price: boolean
 }
 
 export type MessagePayload = {

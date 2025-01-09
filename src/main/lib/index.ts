@@ -156,31 +156,31 @@ export const getSearchResults2 = async (urls: string) => {
 async function compareStokSearches(lastSearch: any[], data: any[]) {
   const settings = await getSettingsJson()
   if (
-    !settings.telegramApiKey ||
-    !settings.telegramChatId ||
-    settings.telegramApiKey === '' ||
-    settings.telegramChatId === ''
+    !settings.telegramSettings?.apiKey ||
+    !settings.telegramSettings?.chatId ||
+    settings.telegramSettings?.apiKey === '' ||
+    settings.telegramSettings?.chatId === ''
   ) {
     return
   }
 
   const telegramSettings: TelegramSettings = {
-    apiKey: settings.telegramApiKey,
-    chatId: settings.telegramChatId
+    apiKey: settings.telegramSettings.apiKey,
+    chatId: settings.telegramSettings.chatId,
+    stock: false,
+    price: false
   }
-  const priceCheck = settings.telegramPrice
-  const stockCheck = settings.telegramStock
   const telegramService = new TelegramService(telegramSettings.apiKey, telegramSettings.chatId)
   if ((await telegramService.verifyCredentials()) === false) {
     return
   }
 
-  if (!priceCheck && !stockCheck) {
+  if (!telegramSettings.price && !telegramSettings.stock) {
     return
   }
   lastSearch.forEach((lastItem) => {
     const matchingDataItem = data.find((item) => item.url === lastItem.url)
-    if (priceCheck) {
+    if (telegramSettings.price) {
       if (
         matchingDataItem &&
         lastItem.details.indirimliFiyati !== matchingDataItem.details.indirimliFiyati
@@ -192,7 +192,7 @@ async function compareStokSearches(lastSearch: any[], data: any[]) {
         telegramService.sendMessage(message)
       }
     }
-    if (stockCheck) {
+    if (telegramSettings.stock) {
       if (matchingDataItem && lastItem.details.sizes) {
         lastItem.details.sizes.forEach((lastSize) => {
           const matchingSize = matchingDataItem.details.sizes.find(
@@ -264,10 +264,10 @@ export const getSettingsJson: GetSettingsJson = async () => {
 }
 
 export const writeSettingsJson: SetSettingsJson = async (settings) => {
-  if (settings.telegramApiKey && settings.telegramApiKey !== '') {
+  if (settings.telegramSettings?.apiKey && settings.telegramSettings?.chatId !== '') {
     const telegramService = new TelegramService(
-      settings.telegramApiKey,
-      settings.telegramChatId || ''
+      settings.telegramSettings.apiKey || '',
+      settings.telegramSettings.chatId || ''
     )
     if ((await telegramService.verifyCredentials()) === false) {
       throw new Error()

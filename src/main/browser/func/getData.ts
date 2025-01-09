@@ -69,7 +69,7 @@ async function fetchScriptContent(url: string) {
           sizes: jsonObject.product.allVariants.map((variant) => ({
             itemNumber: variant.itemNumber,
             beden: variant.value,
-            barcode: variant.barcode,
+            barcode: variant.barcode || jsonObject.product.variants[0].barcode,
             inStock: variant.inStock ? 'Stokta var' : 'Stokta yok'
           }))
         }
