@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { saveSearchResultsAtom } from '@renderer/store'
 import { Button, message, Progress, Tooltip } from 'antd'
 import { useSetAtom } from 'jotai'
@@ -6,7 +5,6 @@ import { useEffect, useState } from 'react'
 
 export const Search = () => {
   const [url, setUrl] = useState('')
-
   const [selectedUrl, setSelectedUrl] = useState(null)
   const [progress, setProgress] = useState(0) // Yüzdeyi tutacak state
   const [searchDescription, setSearchDescription] = useState('')
@@ -21,15 +19,21 @@ export const Search = () => {
     const interval = setInterval(() => {
       const progressBar = document.getElementById('progressBar')
       if (progressBar) {
-        // Div içeriğini al ve sayıya dönüştür
         const text = progressBar.textContent || '0%'
-        const value = parseInt(text.replace('%', ''), 10) // "%" karakterini temizle ve sayıya dönüştür
-        setProgress(value) // State'i güncelle
+        const value = parseFloat(text.replace('%', ''))
+        setProgress(value)
       }
-    }, 500) // Her 500ms'de bir kontrol et
+    }, 500)
 
-    return () => clearInterval(interval) // Component unmount olduğunda temizle
+    return () => clearInterval(interval)
   }, [])
+
+  useEffect(() => {
+    // Eğer progress > 0 olduğunda loading mesajını kapat
+    if (progress > 0) {
+      message.destroy() // Antd loading mesajını temizler
+    }
+  }, [progress])
 
   const refresh = () => {
     setSearchDescription('')
@@ -54,9 +58,10 @@ export const Search = () => {
         <Button
           className="w-96"
           onClick={async () => {
-            setLoading(true) // Disable the button
+            setLoading(true)
             try {
-              message.loading('Ürün Linkleri Toplanıyor')
+              // Progress sıfırken loading mesajını sürekli göster
+              message.loading('Ürün Linkleri Toplanıyor', 0) // Süresiz bir loading mesajı
               const data = await window.context.getSearchResults(url!)
               const newSearch = {
                 results: data.map((item) => ({
@@ -72,11 +77,11 @@ export const Search = () => {
               console.error(error)
               message.error('Veriler Alınamadı')
             } finally {
-              setLoading(false) // Re-enable the button
+              setLoading(false)
             }
           }}
           type="primary"
-          disabled={!url.includes('trendyol.com') || loading} // Disable button if url is empty
+          disabled={!url.includes('trendyol.com') || loading}
         >
           Verileri Al
         </Button>
@@ -92,7 +97,11 @@ export const Search = () => {
       </div>
       {loading && (
         <div style={{ marginTop: '10px' }}>
-          <Progress type="circle" percent={progress} />
+          <Progress
+            type="circle"
+            percent={progress}
+            format={(percent) => `${percent?.toFixed(2)}%`}
+          />
         </div>
       )}
     </div>

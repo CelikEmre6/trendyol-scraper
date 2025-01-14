@@ -270,7 +270,7 @@ export const writeSettingsJson: SetSettingsJson = async (settings) => {
       settings.telegramSettings.chatId || ''
     )
     if ((await telegramService.verifyCredentials()) === false) {
-      throw new Error()
+      throw new Error('Telegram bot or chatId is not configured.')
     }
   }
   await writeFile(`${getRootDir()}/settings.json`, JSON.stringify(settings, null, 2), {
