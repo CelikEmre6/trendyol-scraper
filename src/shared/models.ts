@@ -26,8 +26,6 @@ export type Settings = {
   licanceKey?: string
   productNumber: number
   variant: boolean
-  comment: boolean
-  commentNumber: number
   telegramSettings?: TelegramSettings
 }
 export type TelegramSettings = {

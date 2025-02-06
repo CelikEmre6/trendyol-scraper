@@ -79,42 +79,40 @@ async function fetchScriptContent(url: string) {
           }))
         }
       }
-      const settings = await getSettingsJson()
-      const flag = settings.comment
-      const commentNumber = settings.commentNumber
-      if (flag) {
-        const yorumlar = [] as any // Initialize an empty array to store all comments
-        let commentUrl = ''
-        for (let i = 1; i <= Math.ceil(commentNumber / 50); i++) {
-          if (dictionary.details.toplamYorumSayısı < 50) {
-            commentUrl = `https://apigw.trendyol.com/discovery-web-websfxsocialreviewrating-santral/product-reviews-detailed?sellerId=${dictionary.details.saticiId}&contentId=${dictionary.details.productId}&pageSize=50&channelId=1`
-          } else {
-            commentUrl = `https://apigw.trendyol.com/discovery-web-websfxsocialreviewrating-santral/product-reviews-detailed?sellerId=${dictionary.details.saticiId}&contentId=${dictionary.details.productId}&pageSize=50&channelId=1&page=${i}`
-          }
 
-          const response = await axios.get(commentUrl)
-          const dataComment = response.data
-          const jsonObjectComment = dataComment.result.productReviews.content
+      // if (false) {
+      //   const yorumlar = [] as any // Initialize an empty array to store all comments
+      //   let commentUrl = ''
+      //   for (let i = 1; i <= Math.ceil(commentNumber / 50); i++) {
+      //     if (dictionary.details.toplamYorumSayısı < 50) {
+      //       commentUrl = `https://apigw.trendyol.com/discovery-web-websfxsocialreviewrating-santral/product-reviews-detailed?sellerId=${dictionary.details.saticiId}&contentId=${dictionary.details.productId}&pageSize=50&channelId=1`
+      //     } else {
+      //       commentUrl = `https://apigw.trendyol.com/discovery-web-websfxsocialreviewrating-santral/product-reviews-detailed?sellerId=${dictionary.details.saticiId}&contentId=${dictionary.details.productId}&pageSize=50&channelId=1&page=${i}`
+      //     }
 
-          // Push the mapped comments into the yorumlar array
-          yorumlar.push(
-            ...jsonObjectComment.map((review) => ({
-              yorum: review.comment,
-              puan: review.rate,
-              tarih: review.lastModifiedDate,
-              isElite: review.isElite,
-              isInfluencer: review.isInfluencer,
-              reviewLikeCount: review.reviewLikeCount
-            }))
-          )
-          if (jsonObjectComment.length < 50) {
-            break
-          }
-        }
+      //     const response = await axios.get(commentUrl)
+      //     const dataComment = response.data
+      //     const jsonObjectComment = dataComment.result.productReviews.content
 
-        // Assign the complete array to dictionary.details.yorumlar after the loop
-        dictionary.details.yorumlar = yorumlar
-      }
+      //     // Push the mapped comments into the yorumlar array
+      //     yorumlar.push(
+      //       ...jsonObjectComment.map((review) => ({
+      //         yorum: review.comment,
+      //         puan: review.rate,
+      //         tarih: review.lastModifiedDate,
+      //         isElite: review.isElite,
+      //         isInfluencer: review.isInfluencer,
+      //         reviewLikeCount: review.reviewLikeCount
+      //       }))
+      //     )
+      //     if (jsonObjectComment.length < 50) {
+      //       break
+      //     }
+      //   }
+
+      //   // Assign the complete array to dictionary.details.yorumlar after the loop
+      //   dictionary.details.yorumlar = yorumlar
+      // }
 
       return dictionary
     } else {
