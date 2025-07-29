@@ -1,7 +1,7 @@
 /* eslint-disable no-unsafe-finally */
 import { getSettingsJson } from '@/lib'
 import axios from 'axios'
-import cheerio from 'cheerio'
+import * as cheerio from 'cheerio'
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 async function fetchScriptContent(url: string) {
@@ -16,13 +16,19 @@ async function fetchScriptContent(url: string) {
     const scriptContents = $('script')
       .map((_, el) => $(el).html())
       .get()
-    const matchingScript = scriptContents.find((content) => content?.includes('inStock'))
-    const jsonRegex = /window\.__PRODUCT_DETAIL_APP_INITIAL_STATE__\s*=\s*(\{.*?\});/s
-    const match = (matchingScript || '').match(jsonRegex)
+
+    const matchingScript = scriptContents.find((content) =>
+      content?.includes('envoy_flash-sales-banner__PROPS')
+    )
+    // const regex = /window\["__envoy_flash-sales-banner__PROPS"\]\s*=\s*(\{[\s\S]*?\})\s*;/
+
+    let match: string | undefined
+    if (matchingScript) {
+      match = matchingScript.split('window["__envoy_flash-sales-banner__PROPS"]=')[1]
+    }
 
     if (match) {
-      const jsonString = match[1]
-      const jsonObject = JSON.parse(jsonString)
+      const jsonObject = JSON.parse(match)
       const attributes = jsonObject.product.attributes.reduce((acc, attribute) => {
         const keyName = attribute.key.name
         const valueName = attribute.value.name
@@ -30,6 +36,7 @@ async function fetchScriptContent(url: string) {
         return acc
       }, {})
 
+      console.log($('#product-info > div > div.content-description > ul').text())
       const dictionary: any = {
         url: url,
         groupId: jsonObject.product.productGroupId,
@@ -39,39 +46,41 @@ async function fetchScriptContent(url: string) {
           marka: jsonObject.product.brand.name || 'Belirtilmemiş',
           Kategori: jsonObject.product.category.name || 'Belirtilmemiş',
           KategoriHiyerarsi: jsonObject.product.category.hierarchy || 'Belirtilmemiş',
-          saticiAdi: jsonObject.product.merchant.name || 'Belirtilmemiş',
-          saticiId: jsonObject.product.merchant.id || 'Belirtilmemiş',
-          saticiSehri: jsonObject.product.merchant.cityName || 'Belirtilmemiş',
+          saticiAdi: jsonObject.product.merchantListing.merchant.name || 'Belirtilmemiş',
+          saticiId: jsonObject.product.merchantListing.merchant.id || 'Belirtilmemiş',
+          saticiSehri: jsonObject.product.merchantListing.merchant.cityName || 'Belirtilmemiş',
           indirimliFiyati:
-            jsonObject.product.variants[0].price.discountedPrice.value || 'Belirtilmemiş',
-          SatisFiyati: jsonObject.product.variants[0].price.sellingPrice.value || 'Belirtilmemiş',
+            jsonObject.product.merchantListing.winnerVariant.price.discountedPrice.value ||
+            'Belirtilmemiş',
+          SatisFiyati:
+            jsonObject.product.merchantListing.winnerVariant.price.sellingPrice.value ||
+            'Belirtilmemiş',
           OrjinalFiyati:
-            jsonObject.product.variants[0].price.originalPrice.value || 'Belirtilmemiş',
+            jsonObject.product.merchantListing.winnerVariant.price.originalPrice.value ||
+            'Belirtilmemiş',
           KuponluFiyatı:
-            jsonObject.product.variants[0].price.couponApplicablePrice || 'Belirtilmemiş',
-          SepetSayısı: jsonObject.product.socialProof.basketCount || 'Belirtilmemiş',
-          GoruntulenmeSayısı: jsonObject.product.socialProof.pageViewCount || 'Belirtilmemiş',
-          favoriSayısı: jsonObject.product.socialProof.favoriteCount || 'Belirtilmemiş',
+            jsonObject.product.merchantListing.winnerVariant.price.couponApplicablePrice.value ||
+            'Belirtilmemiş',
+          // SepetSayısı: jsonObject.product.socialProof.basketCount || 'Belirtilmemiş',
+          // GoruntulenmeSayısı: jsonObject.product.socialProof.pageViewCount || 'Belirtilmemiş',
+          // favoriSayısı: jsonObject.product.socialProof.favoriteCount || 'Belirtilmemiş',
           vergi: jsonObject.product.tax || 'Belirtilmemiş',
           ortalamaDegerlendirme: jsonObject.product.ratingScore.averageRating || 'Belirtilmemiş',
-          toplamDegerlendirmeSayısı:
-            jsonObject.product.ratingScore.totalRatingCount || 'Belirtilmemiş',
-          toplamYorumSayısı: jsonObject.product.ratingScore.totalCommentCount || 'Belirtilmemiş',
+          toplamDegerlendirmeSayısı: jsonObject.product.ratingScore.totalCount || 'Belirtilmemiş',
+          toplamYorumSayısı: jsonObject.product.ratingScore.commentCount || 'Belirtilmemiş',
           bedavaKargo:
-            typeof jsonObject.product.isFreeCargo !== 'undefined'
-              ? jsonObject.product.isFreeCargo
+            typeof jsonObject.product.merchantListing.winnerVariant.freeCargo !== 'undefined'
+              ? jsonObject.product.merchantListing.winnerVariant.freeCargo
                 ? 'bedava'
                 : 'bedava değil'
               : 'belirtilmemiş',
           attributes,
-          açıklama: jsonObject.product.descriptions
-            .filter((description) => description.priority === 0) // Filter for priority 0
-            .map((description) => description.text)
-            .join(' '),
-          images: (jsonObject.product.images || []).map(
-            (image) => `https://cdn.dsmcdn.com/${image}`
-          ),
-          sizes: jsonObject.product.allVariants.map((variant) => ({
+          // açıklama: jsonObject.product.descriptions
+          //   .filter((description) => description.priority === 0) // Filter for priority 0
+          //   .map((description) => description.text)
+          //   .join(' '),
+          images: jsonObject.product.images,
+          sizes: jsonObject.product.variants.map((variant) => ({
             itemNumber: variant.itemNumber,
             beden: variant.value,
             barcode: variant.barcode || jsonObject.product.variants[0].barcode || '',
