@@ -49,6 +49,13 @@ export const Search = () => {
         value={url}
         onChange={handleUrlChange}
         className="w-96 text-blue-500"
+        style={{
+          height: '40px',
+          width: '60%',
+          padding: '10px',
+          borderRadius: '5px',
+          border: '1px solid #ccc'
+        }}
       ></input>
       <Tooltip
         title={!url.includes('trendyol.com') ? 'Lütfen geçerli bir Trendyol linki giriniz.' : ''}
