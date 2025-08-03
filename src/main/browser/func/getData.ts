@@ -35,8 +35,11 @@ async function fetchScriptContent(url: string) {
         acc[keyName] = valueName
         return acc
       }, {})
-
-      console.log($('#product-info > div > div.content-description > ul').text())
+      const productId = jsonObject.product.id
+      const descData = await axios.get(
+        `https://apigw.trendyol.com/discovery-pdp-websfxcomponentread-santral/${productId}`
+      )
+      const descDataJson = descData.data.result
       const dictionary: any = {
         url: url,
         groupId: jsonObject.product.productGroupId,
@@ -75,10 +78,10 @@ async function fetchScriptContent(url: string) {
                 : 'bedava değil'
               : 'belirtilmemiş',
           attributes,
-          // açıklama: jsonObject.product.descriptions
-          //   .filter((description) => description.priority === 0) // Filter for priority 0
-          //   .map((description) => description.text)
-          //   .join(' '),
+          açıklama: descDataJson.descriptions
+            .filter((description) => description.priority === 0) // Filter for priority 0
+            .map((description) => description.text)
+            .join(' '),
           images: jsonObject.product.images,
           sizes: jsonObject.product.variants.map((variant) => ({
             itemNumber: variant.itemNumber,
