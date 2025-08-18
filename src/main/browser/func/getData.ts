@@ -52,6 +52,7 @@ async function fetchScriptContent(url: string) {
           saticiAdi: jsonObject.product.merchantListing.merchant.name || 'Belirtilmemiş',
           saticiId: jsonObject.product.merchantListing.merchant.id || 'Belirtilmemiş',
           saticiSehri: jsonObject.product.merchantListing.merchant.cityName || 'Belirtilmemiş',
+          code: jsonObject.product.productCode || 'Belirtilmemiş',
           indirimliFiyati:
             jsonObject.product.merchantListing.winnerVariant.price.discountedPrice.value ||
             'Belirtilmemiş',
