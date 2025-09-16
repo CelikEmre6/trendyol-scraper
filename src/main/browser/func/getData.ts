@@ -52,6 +52,8 @@ async function fetchScriptContent(url: string) {
           saticiAdi: jsonObject.product.merchantListing.merchant.name || 'Belirtilmemiş',
           saticiId: jsonObject.product.merchantListing.merchant.id || 'Belirtilmemiş',
           saticiSehri: jsonObject.product.merchantListing.merchant.cityName || 'Belirtilmemiş',
+          saticiEmail:
+            jsonObject.product.merchantListing.merchant.registeredEmailAddress || 'Belirtilmemiş',
           code: jsonObject.product.productCode || 'Belirtilmemiş',
           indirimliFiyati:
             jsonObject.product.merchantListing.winnerVariant.price.discountedPrice.value ||
@@ -258,14 +260,14 @@ export const getData = async (url: string, onProgress?: (progress: string) => vo
   return allData
 }
 
-export const getData2 = async (urls: string) => {
+export const getData2 = async (urls: string[]) => {
   const allData: any[] = []
-  for (const link of urls.split('\n')) {
+  for (const link of urls) {
     const result = await fetchScriptContent(link)
     if (result.url && result.url.trim()) {
       allData.push(result)
     }
-    await new Promise((resolve) => setTimeout(resolve, 100)) // 300 ms bekleme
+    await new Promise((resolve) => setTimeout(resolve, 100))
   }
   return allData
 }

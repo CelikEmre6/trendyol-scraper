@@ -45,7 +45,7 @@ export const Search = () => {
     <div className="w-full h-full flex flex-col items-center justify-center space-y-3 relative">
       <input
         type="text"
-        placeholder="Trendyol Linki Giriniz"
+        placeholder="Trendyol / Hepsiburada Linki Giriniz"
         value={url}
         onChange={handleUrlChange}
         className="w-96 text-blue-500"
@@ -58,7 +58,11 @@ export const Search = () => {
         }}
       ></input>
       <Tooltip
-        title={!url.includes('trendyol.com') ? 'Lütfen geçerli bir Trendyol linki giriniz.' : ''}
+        title={
+          !url.includes('trendyol.com') || url.includes('hepsiburada.com/')
+            ? 'Lütfen geçerli bir Trendyol veya Hepsiburada linki giriniz.'
+            : ''
+        }
         placement="bottom"
         color="blue"
       >
@@ -75,7 +79,9 @@ export const Search = () => {
                   ...item
                 })),
                 date: new Date().getTime(),
-                description: url.slice(url.indexOf('trendyol.com/') + 13)
+                description: url.includes('trendyol.com/')
+                  ? url.slice(url.indexOf('trendyol.com/') + 13)
+                  : url.slice(url.indexOf('hepsiburada.com/') + 16)
               }
               await setSearchResults(newSearch)
               refresh()
@@ -88,7 +94,7 @@ export const Search = () => {
             }
           }}
           type="primary"
-          disabled={!url.includes('trendyol.com') || loading}
+          disabled={(!url.includes('trendyol.com') && !url.includes('hepsiburada.com')) || loading}
         >
           Verileri Al
         </Button>
