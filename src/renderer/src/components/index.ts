@@ -1,5 +1,6 @@
 export * from './ActionButtonsRow'
 export * from './AppLayout'
+export * from './attrModal'
 export * from './Button'
 export * from './DraggableTopBar'
 export * from './FloatingNoteTitle'

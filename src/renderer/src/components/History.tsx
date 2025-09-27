@@ -1,12 +1,15 @@
 import { useSearchResultsTable } from '@renderer/hooks/useSearchResultsTable'
 import { deleteSearchResultAtom, saveSearchResultsAtom } from '@renderer/store'
-import { Button, Table } from 'antd'
+import { Button, message, Table } from 'antd'
 import { useSetAtom } from 'jotai'
+import { useState } from 'react'
+import { AttrModal } from './attrModal'
 
 export const History = () => {
   const { selectedSearch } = useSearchResultsTable()
   const deleteSearch = useSetAtom(deleteSearchResultAtom)
   const setSearchResults = useSetAtom(saveSearchResultsAtom)
+  const [isAttrModalOpen, setIsAttrModalOpen] = useState(false)
 
   const handleDelete = async () => {
     await deleteSearch()
@@ -101,15 +104,30 @@ export const History = () => {
         </Button>
         <div className="flex items-center space-x-3">
           <Button
+            onClick={() => {
+              setIsAttrModalOpen(true)
+            }}
+          >
+            Özellikler
+          </Button>
+          <Button
             type="primary"
             onClick={() => {
               window.context.createExcelFile(selectedSearch)
+              message.success('Excel dosyası oluşturuldu.')
             }}
           >
             Excele Aktar
           </Button>
         </div>
       </div>
+      <AttrModal
+        open={isAttrModalOpen}
+        onClose={() => setIsAttrModalOpen(false)}
+        onSave={(selected) => {
+          console.log('Selected attributes:', selected)
+        }}
+      />
       <Table
         rowKey={(record) => record.url}
         dataSource={selectedSearch?.results}

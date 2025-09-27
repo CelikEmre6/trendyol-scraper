@@ -1,364 +1,282 @@
 /* eslint-disable prettier/prettier */
+/* eslint-disable no-unsafe-finally */
+import { Configuration, PlaywrightCrawler } from 'crawlee';
+import { firefox } from 'playwright';
+/* eslint-disable @typescript-eslint/no-explicit-any */
+let camoufox;
+let launchOptions;
 
-import * as cheerio from 'cheerio';
-import { CheerioCrawler } from 'crawlee';
-
-interface ProductListing {
-    productUrls: string[]
-    nextPageUrl?: string
+async function initializeCamoufox() {
+    if (!camoufox) {
+        camoufox = await import('camoufox-js');
+        // For named exports, access them from the module object
+        launchOptions = camoufox.launchOptions || camoufox.default?.launchOptions;
+    }
+    return { camoufox, launchOptions };
 }
+const config = Configuration.getGlobalConfig();
+config.set('persistStorage', false);
+let pageCount = 1;
+const detailLinks = [] as string[];
+const urls = [] as string[];
+const results = [] as any[];
 
-class ProductScraper {
-    private listingCrawler: CheerioCrawler
-    private productCrawler: CheerioCrawler
-    private productUrls: Set<string> = new Set()
-    private processedCount: number = 0
-    private onprogress: any
-    private results: any[] = []
+// Create async function to initialize crawlers
+async function initializeCrawlers() {
+    const launchOptions = await initializeCamoufox();
+    const launchOpts = launchOptions.launchOptions({
+        headless: true,
+    });
 
-    constructor(onprogressF: any) {
-        this.listingCrawler = new CheerioCrawler({
-            maxRequestsPerMinute: 100,
-            requestHandler: this.handleListingPage.bind(this),
+    const summaryCrawler = new PlaywrightCrawler({
+        maxRequestsPerMinute: 15,
+        postNavigationHooks: [
+            async ({ handleCloudflareChallenge }) => {
+                await handleCloudflareChallenge();
+            },
+        ],
+        sameDomainDelaySecs: 3,
+        statisticsOptions: {},
+        browserPoolOptions: {
+            useFingerprints: false,
+        },
+        launchContext: {
+            launcher: firefox,
+            launchOptions: launchOpts,
+        },
+        async requestHandler({ page, request, log }) {
+            log.info(`Scraping URL: ${request.url}`);
+            const ilanText = await page.$$eval('div', divs => {
+                const el = Array.from(divs).find(d => {
+                    const text = d.textContent?.trim();
+                    return text ? /^\d+\s*ürün$/.test(text) : false;
+                });
+                return el?.textContent?.trim() || '';
+            });
+            const ilanCount = parseInt(ilanText.replace(/\D/g, ''), 10);
+            pageCount = Math.ceil(ilanCount / 36);
+            console.log(`Toplam ilan sayısı: ${ilanCount}, Sayfa: ${pageCount}`);
+            const linkElements = await page.$$eval('[class^="productListContent"] li article a[href]', elements =>
+                elements
+                    .map(el => el.getAttribute('href'))
+                    .filter(href => href && !href.includes('adservice'))
+            );
+            const baseUrl = 'https://www.hepsiburada.com';
+            const links = linkElements.map(href => href!.startsWith('http') ? href! : baseUrl + href);
 
-        })
+            log.info(`Found links: ${links.length}`);
+            detailLinks.push(...links);
+        },
+    });
 
-        this.productCrawler = new CheerioCrawler({
-            maxRequestsPerMinute: 50,
-            requestHandler: this.handleProductPage.bind(this),
-        })
-        this.onprogress = onprogressF
-    }
+    const listCrawler = new PlaywrightCrawler({
+        maxRequestsPerMinute: 15,
+        postNavigationHooks: [
+            async ({ handleCloudflareChallenge }) => {
+                await handleCloudflareChallenge();
+            },
+        ],
+        sameDomainDelaySecs: 3,
+        statisticsOptions: {},
+        browserPoolOptions: {
+            useFingerprints: false,
+        },
+        launchContext: {
+            launcher: firefox,
+            launchOptions: launchOpts,
+        },
+        async requestHandler({ page, log }) {
+            const linkElements = await page.$$eval('[class^="productListContent"] li article a[href]', elements =>
+                elements
+                    .map(el => el.getAttribute('href'))
+                    .filter(href => href && !href.includes('adservice'))
+            );
+            const baseUrl = 'https://www.hepsiburada.com';
+            const links = linkElements.map(href => href!.startsWith('http') ? href! : baseUrl + href);
 
-    // Listing sayfasını işleme
-    private async handleListingPage({ request, $ }: any): Promise<void> {
-        console.log(`Scraping listing page: ${request.url}`)
+            log.info(`Found links: ${links.length}`);
+            detailLinks.push(...links);
+        },
+    });
 
-        try {
-            // Bu kısmı sitenizin yapısına göre özelleştirin
-            const listingData = this.extractProductUrls($)
+    const detailCrawler = new PlaywrightCrawler({
+        maxRequestsPerMinute: 15,
+        postNavigationHooks: [
+            async ({ handleCloudflareChallenge }) => {
+                await handleCloudflareChallenge();
+            },
+        ],
+        browserPoolOptions: {
+            useFingerprints: false,
+        },
+        launchContext: {
+            launcher: firefox,
+            launchOptions: launchOpts,
+        },
+        async requestHandler({ page, request, log }) {
+            log.info(`Scraping detail URL: ${request.url}`);
+            // Sayfanın tam yüklenmesini bekle
+            // try {
+            //     await page.waitForSelector('#storefront-app', { timeout: 15000 });
+            // } catch (err) {
+            //     log.warning(`Sayfa yüklenemedi veya 429 aldık: ${request.url}`);
+            //     throw err;
+            // }
 
-            // Ürün URL'lerini kaydet
-            listingData.productUrls.forEach((url) => {
-                let absoluteUrl = this.makeAbsoluteUrl(url, request.url)
-                if (absoluteUrl) {
-                    try {
-                        const u = new URL(absoluteUrl)
-                        u.search = '' // remove query params
-                        absoluteUrl = u.href
-                        // eslint-disable-next-line no-empty
-                    } catch { }
-                    if (
-                        !this.productUrls.has(absoluteUrl) &&
-                        absoluteUrl !== 'https://www.hepsiburada.com/null'
-                    ) {
-                        this.productUrls.add(absoluteUrl)
-                    }
+            await page.waitForTimeout(1500);
+
+            const scrapedData = await page.evaluate(() => {
+                const rawJson = document.querySelector('#reduxStore')?.innerHTML;
+                if (!rawJson) {
+                    throw new Error('reduxStore script not found');
                 }
-            })
-
-            if (listingData.productUrls.length === 36) {
-                const currentUrl = new URL(request.url)
-                const currentPage = Number(currentUrl.searchParams.get('sayfa') || '1')
-                currentUrl.searchParams.set('sayfa', String(currentPage + 1))
-                const nextPageUrl = currentUrl.href
-                await this.listingCrawler.addRequests([{ url: nextPageUrl, label: 'LISTING' }])
-            }
-        } catch (error) {
-            console.error(`Error processing listing page ${request.url}:`, error)
-        }
-    }
-
-    // Ürün sayfasını işleme
-    private async handleProductPage({ request, $ }: any): Promise<any> {
-        console.log(`Scraping product page: ${request.url}`)
-
-        try {
-            // Bu kısmı sitenizin yapısına göre özelleştirin
-            const productData = this.extractProductData($, request.url)
-
-            // Veriyi kaydet
-            this.results.push(productData)
-
-            this.processedCount++
-            const progress = (this.processedCount / (this.productUrls.size) * 100).toFixed(2)
-            if (typeof this.onprogress === 'function') {
-                this.onprogress(`${progress}%`)
-            }
-            console.log(`Progress: ${this.processedCount}/${this.productUrls.size} products processed`)
-            return productData
-        } catch (error) {
-            console.error(`Error processing product page ${request.url}:`, error)
-        }
-    }
-
-    // Ürün URL'lerini çıkarma (ÖZELLEŞTİRİLECEK)
-    private extractProductUrls($: cheerio.CheerioAPI): ProductListing {
-        // ÖRNEK: CSS selektörlerini sitenize göre değiştirin
-        const productUrls: string[] = []
-
-        // Ürün linklerini bul
-        $('[class^="productListContent"] li article a[href]').each((_, element) => {
-            const href = $(element).attr('href')
-            if (href && !productUrls.includes(href) && !href.includes('adservice')) {
-                productUrls.push(href)
-            }
-        })
-        console.log(productUrls)
-
-        // Sonraki sayfa linkini bul
-        const nextPageUrl: string | undefined = undefined
-
-        return {
-            productUrls,
-            nextPageUrl
-        }
-    }
-
-    // Ürün verilerini çıkarma (ÖZELLEŞTİRİLECEK)
-    private extractProductData($: cheerio.CheerioAPI, url: string): any {
-        // ÖRNEK: CSS selektörlerini sitenize göre değiştirin
-        // Ürün verilerini reduxStore scriptinden çıkart
-        try {
-            const rawJson = $('#reduxStore').html()
-            if (!rawJson) {
-                throw new Error('reduxStore script not found')
-            }
-            const parsed = JSON.parse(rawJson)
-            // Hepsiburada reduxStore yapısına göre ana state anahtarını bul
-            // Genellikle ürün bilgileri "product" veya benzeri bir anahtarda olabilir
-            // Aşağıdaki örnek anahtarlar, gerçek yapıya göre özelleştirilmeli
-            const productState = parsed['product'] || parsed['PDP'] || parsed['productDetail'] || parsed
-            let product: any = productState
-            // Eğer bir alt anahtar varsa buradan alın (ör: productState.product)
-            if (productState && productState.productState) {
-                product = productState.productState
-            }
-            // Fallback: product anahtarları belirle
-            const title = product?.product?.name || product?.title || ''
-            const barcode = product.product.barcode || ''
-            const brand = product.product.brand || ''
-            const categories = product.product.categories || []
-            const category =
-                categories.length > 0 ? categories[categories.length - 1].categoryName : undefined
-            const categoryHierarchy = categories.map((c: any) => c.categoryName).join(' > ') || ''
-            const description = $('.productDescriptionContent').text() || ''
-            const groupId = product?.product?.productId || ''
-            const sku = product.product.sku || ''
-            const price = product?.product?.prices
-                ? Math.min(...product.product.prices.map((p: any) => Number(p.value)))
-                : undefined
-            const color = product.activeVariant.values.Renk || ''
-            const expGroup = product?.product?.expends?.find((a: any) => a?.groupName === '')
-            const attributes = expGroup
-                ? expGroup.properties.reduce((acc: any, p: any) => {
-                    const keyName = p.name
-                    const valueName = p.property
-                    acc[keyName] = valueName
-                    return acc
-                }, {})
-                : {}
-            let images: string[] = []
-            if (product?.product.media && Array.isArray(product.product.media)) {
-                images = product.product.media
-                    .map((m: any) => {
-                        if (m?.url && m?.maxZoomSize) {
-                            return m.url.replace('{size}', m.maxZoomSize)
-                        }
-                        return null
-                    })
-                    .filter(Boolean)
-            }
-            let sizes: any[] = []
-
-            if (product?.variants.Beden) {
-                // Kıyafetler için sadece Beden
-                sizes = product.variants.Beden.properties.map((v: any) => ({
-                    beden: v.value,
-                    inStock: v.isInStock ? 'Stokta Var' : 'Stokta Yok',
-                    barcode: v.sku
-                }))
-            } else if (product?.variants) {
-                // Diğer ürünler için tüm varyantları düz liste olarak al
-                sizes = Object.values(product.variants)
-                    .flatMap((variantGroup: any) =>
-                        variantGroup.properties.map((p: any) => ({
-                            beden: p.name + ' - ' + p.value,
-                            inStock: p.isInStock ? 'Stokta Var' : 'Stokta Yok',
-                            barcode: p.sku
-                        }))
-                    )
-            }
-            const normalizeUrl = (url: string) => {
-                try {
-                    const u = new URL(url)
-                    u.search = '' // remove query params
-                    return u.href
-                } catch {
-                    return url
+                const parsed = JSON.parse(rawJson);
+                const productState = parsed['product'] || parsed['PDP'] || parsed['productDetail'] || parsed;
+                let product: any = productState;
+                if (productState && productState.productState) {
+                    product = productState.productState;
                 }
-            }
 
-            let colorVariantsLinks: string[] = []
+                const title = product?.product?.name || product?.title || '';
+                const barcode = product.product.barcode || '';
+                const brand = product.product.brand || '';
+                const categories = product.product.categories || [];
+                const category = categories.length > 0 ? categories[categories.length - 1].categoryName : undefined;
+                const categoryHierarchy = categories.map((c: any) => c.categoryName).join(' > ') || '';
+                const description = document.querySelector('.productDescriptionContent')?.innerHTML.trim() || '';
+                const groupId = product?.product?.productId || '';
+                const sku = product.product.sku || '';
+                const price = product?.product?.prices
+                    ? Math.min(...product.product.prices.map((p: any) => Number(p.value)))
+                    : undefined;
+                const color = product.activeVariant?.values?.Renk || '';
+                const expGroup = product?.product?.expends?.find((a: any) => a?.groupName === '');
 
-            if (product?.variants?.Renk?.properties?.length) {
-                colorVariantsLinks = Array.from(
-                    new Set(
-                        product.variants.Renk.properties
-                            .filter((v: any) => v?.value && v.value !== color && v.urlName && v.sku)
-                            .map((v: any) => {
-                                try {
-                                    let baseUrl = `https://www.hepsiburada.com/${v.urlName}`
-                                    if (!baseUrl.includes(`-p-${v.sku}`)) {
-                                        baseUrl = `${baseUrl}-p-${v.sku}`
-                                    }
-                                    return normalizeUrl(baseUrl)
-                                } catch {
-                                    return null
-                                }
-                            })
-                            .filter((u: any) => typeof u === 'string' && u && !u.endsWith('/null'))
-                    )
-                )
-            }
-            if (colorVariantsLinks && Array.isArray(colorVariantsLinks)) {
-                for (const variantUrl of colorVariantsLinks) {
-                    if (variantUrl && typeof variantUrl === 'string' && !this.productUrls.has(variantUrl)) {
-                        this.productUrls.add(variantUrl)
-                        this.productCrawler.addRequests([{ url: variantUrl, label: 'PRODUCT' }])
-                    }
+                const attributes = expGroup
+                    ? expGroup.properties.reduce((acc: any, p: any) => {
+                        const keyName = p.name;
+                        const valueName = p.property;
+                        acc[keyName] = valueName;
+                        return acc;
+                    }, {})
+                    : {};
+                let images: string[] = [];
+                if (product?.product.media && Array.isArray(product.product.media)) {
+                    images = product.product.media
+                        .map((m: any) => {
+                            if (m?.url && m?.maxZoomSize) {
+                                return m.url.replace('{size}', m.maxZoomSize);
+                            }
+                            return null;
+                        })
+                        .filter(Boolean);
                 }
-            }
-            const productData = {
-                url: url,
-                groupId: groupId,
-                details: {
-                    isim: title ? String(title).trim() : undefined,
-                    productId: sku ? String(sku).trim() : undefined,
-                    indirimliFiyati: price ? Number(price) : undefined,
-                    code: barcode ? String(barcode).trim() : undefined,
-                    marka: brand ? String(brand).trim() : undefined,
-                    Kategori: category,
-                    KategoriHiyerarsi: categoryHierarchy,
-                    saticiAdi: product.product.merchantName,
-                    saticiId: product.product.merchantId,
-                    saticiSehri: product.product.merchantCity,
-                    sizes: sizes,
-                    color: color,
-                    attributes: attributes,
-                    açıklama: description ? String(description).trim() : undefined,
-                    images: images,
-                    vergi: product?.product?.taxVatRate,
-                    ortalamaDegerlendirme: product?.product?.reviews?.customerReviewScore,
-                    toplamDegerlendirmeSayısı: product?.product?.reviews?.customerReviewCount,
-                    bedavaKargo:
-                        typeof product.product.shipmentInformation.freeShipping !== 'undefined'
+                let sizes: any[] = [];
+
+                if (product?.variants?.Beden) {
+                    sizes = product.variants.Beden.properties.map((v: any) => ({
+                        beden: v.value,
+                        inStock: v.isInStock ? 'Stokta Var' : 'Stokta Yok',
+                        barcode: v.sku
+                    }));
+                } else if (product?.variants) {
+                    sizes = Object.values(product.variants)
+                        .flatMap((variantGroup: any) =>
+                            variantGroup.properties.map((p: any) => ({
+                                beden: p.name + ' - ' + p.value,
+                                inStock: p.isInStock ? 'Stokta Var' : 'Stokta Yok',
+                                barcode: p.sku
+                            }))
+                        );
+                }
+
+                return {
+                    url: window.location.href,
+                    groupId: groupId,
+                    details: {
+                        isim: title ? String(title).trim() : undefined,
+                        productId: sku ? String(sku).trim() : undefined,
+                        indirimliFiyati: price ? Number(price) : undefined,
+                        code: barcode ? String(barcode).trim() : undefined,
+                        marka: brand ? String(brand).trim() : undefined,
+                        Kategori: category,
+                        KategoriHiyerarsi: categoryHierarchy,
+                        saticiAdi: product.product.merchantName,
+                        saticiId: product.product.merchantId,
+                        saticiSehri: product.product.merchantCity,
+                        sizes: sizes,
+                        color: color,
+                        attributes: attributes,
+                        açıklama: description ? String(description).trim() : undefined,
+                        images: images,
+                        vergi: product?.product?.taxVatRate,
+                        ortalamaDegerlendirme: product?.product?.reviews?.customerReviewScore,
+                        toplamDegerlendirmeSayısı: product?.product?.reviews?.customerReviewCount,
+                        bedavaKargo: typeof product.product.shipmentInformation.freeShipping !== 'undefined'
                             ? product.product.shipmentInformation.freeShipping
                                 ? 'bedava'
                                 : 'bedava değil'
                             : 'belirtilmemiş'
-                }
+                    }
+                };
+            });
+
+            if (scrapedData.details.isim && scrapedData.details.isim !== 'Belirtilmemiş') {
+                results.push(scrapedData);
+            } else {
+                log.warning(`Eksik veri, Dataset'e eklenmedi: ${request.url}`);
+                throw new Error('Eksik veri');
             }
+        },
+    });
 
-            return productData
-        } catch (err) {
-            // Fallback: en azından url ver
-            return { url }
-        }
-    }
+    return { summaryCrawler, listCrawler, detailCrawler };
+}
 
-    // Göreli URL'yi mutlak URL'ye çevirme
-    private makeAbsoluteUrl(url: string, baseUrl: string): string | null {
-        try {
-            return new URL(url, baseUrl).href
-        } catch (error) {
-            console.error(`Error creating absolute URL from ${url} and base ${baseUrl}:`, error)
-            return null
-        }
-    }
-
-    // Scraping işlemini başlat
-    public async startScraping(startUrls: string[]): Promise<any> {
-        console.log('Starting scraping process...')
-
-        // Listing sayfalarını işle
-        await this.listingCrawler.run(
-            startUrls.map((url) => ({
-                url,
-                label: 'LISTING'
-            }))
-        )
-
-        console.log(`Found ${this.productUrls.size} product URLs`)
-
-        // Ürün sayfalarını işle
-        const productUrlsArray = Array.from(this.productUrls)
-        await this.productCrawler.run(
-            productUrlsArray.map((url) => ({
-                url,
-                label: 'PRODUCT'
-            }))
-        )
-
-        console.log('Scraping completed!')
-        return this.results
-    }
-
-    // Scraping doğrudan ürün sayfalarından başlat (product page'ler)
-    public async startScrapingFromProductPages(productPageUrls: string[]): Promise<any> {
-        console.log('Starting scraping from product pages...')
-        // Normalize and add to set
-        for (const rawUrl of productPageUrls) {
-            if (!rawUrl || typeof rawUrl !== 'string') continue
-            let absoluteUrl = rawUrl.trim()
-            try {
-                const u = new URL(absoluteUrl)
-                u.search = '' // remove query params
-                absoluteUrl = u.href
-            } catch { /* empty */ }
-            if (
-                !this.productUrls.has(absoluteUrl) &&
-                absoluteUrl !== 'https://www.hepsiburada.com/null'
-            ) {
-                this.productUrls.add(absoluteUrl)
-            }
-        }
-
-        const productUrlsArray = Array.from(this.productUrls)
-        if (productUrlsArray.length === 0) {
-            console.log('No product urls to process.')
-            return this.results
-        }
-        await this.productCrawler.run(
-            productUrlsArray.map((url) => ({
-                url,
-                label: 'PRODUCT'
-            }))
-        )
-
-        console.log('Product pages scraping completed!')
-        return this.results
-    }
+// Rest of your functions remain the same...
+async function fetchScriptContent(url: string) {
+    // ... existing fetchScriptContent code ...
 }
 
 export const getDataHB = async (url: string, onProgress?: (progress: string) => void) => {
-    const productScraper = new ProductScraper(onProgress)
-    const data = await productScraper.startScraping([url])
-    return data
-}
+    results.length = 0;
 
-export const getDataHB2 = async (urls: string | string[]) => {
-    const productScraper = new ProductScraper(undefined)
-    let urlArray: string[] = []
+    const { summaryCrawler, listCrawler, detailCrawler } = await initializeCrawlers();
 
-    if (typeof urls === 'string') {
-        urlArray = urls.split('\n').map(s => s.trim()).filter(Boolean)
+    let pageUrl = '';
+    if (url.includes('sayfa=')) {
+        pageUrl = url.split('sayfa=')[0] + 'sayfa=';
     } else {
-        urlArray = urls
+        if (url.includes('?')) {
+            pageUrl = url + '&sayfa=';
+        } else {
+            pageUrl = url + '?sayfa=';
+        }
     }
 
-    if (urlArray.length === 0) return []
+    if (pageUrl === 'none') {
+        return results;
+    }
 
-    const data = await productScraper.startScrapingFromProductPages(urlArray)
-    return data
+    if (typeof onProgress === 'function') {
+        onProgress('Ürün Linkleri Toplanıyor...');
+    }
+
+    await summaryCrawler.run([url]);
+
+    for (let i = 2; i <= pageCount; i++) {
+        urls.push(pageUrl + i);
+    }
+
+    await listCrawler.run(urls);
+    await detailCrawler.run(detailLinks);
+
+    return results;
+}
+
+export const getDataHB2 = async (urls: string[]) => {
+    results.length = 0;
+    const { detailCrawler } = await initializeCrawlers();
+    await detailCrawler.run(urls);
+    return results;
 }

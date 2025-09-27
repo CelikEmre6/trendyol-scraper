@@ -5,6 +5,7 @@ import {
   deleteSearch,
   getNotes,
   getSearch,
+  getSearchAttributes,
   getSearchResults,
   getSearchResults2,
   getSettingsJson,
@@ -106,6 +107,7 @@ app.whenReady().then(() => {
   ipcMain.handle('saveSearch', (_, ...args: Parameters<SaveSearch>) => saveSearch(...args))
   ipcMain.handle('getSearch', (_, ...args: Parameters<GetSearch>) => getSearch(...args))
   ipcMain.handle('deleteSearch', (_, ...args: Parameters<DeleteSearch>) => deleteSearch(...args))
+  ipcMain.handle('getSearchAttributes', () => getSearchAttributes())
   ipcMain.handle('createExcelFile', (_, ...args: Parameters<SaveSearch>) =>
     createExcelFile(...args)
   )

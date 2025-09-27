@@ -346,6 +346,39 @@ export const getSearch: GetSearch = async () => {
   return Promise.all(data)
 }
 
+export const getSearchAttributes = async () => {
+  const rootDir = getRootDir()
+
+  const searchFiles = await readdir(rootDir, {
+    encoding: fileEncoding,
+    withFileTypes: false
+  })
+
+  const search = searchFiles
+    .filter((fileName) => fileName.endsWith('.json'))
+    .filter((fileName) => fileName !== 'settings.json')
+    .filter((fileName) => fileName !== 'links.json')
+
+  const attributeKeys = new Set<string>()
+
+  for (const fileName of search) {
+    const file = await readFile(`${getRootDir()}/${fileName}`, { encoding: fileEncoding })
+    const parsed = JSON.parse(file) as Search
+
+    if (parsed.results && Array.isArray(parsed.results)) {
+      parsed.results.forEach((result: any) => {
+        if (result.details && result.details.attributes) {
+          Object.keys(result.details.attributes).forEach((key) => {
+            attributeKeys.add(key)
+          })
+        }
+      })
+    }
+  }
+
+  return Array.from(attributeKeys)
+}
+
 export const deleteSearch: DeleteSearch = async (filename) => {
   const rootDir = getRootDir()
 
@@ -372,7 +405,8 @@ export const createExcelFile: SaveSearch = async (jsonData) => {
   const rootDir = getRootDir()
   const workbook = new ExcelJS.Workbook()
   const worksheet = workbook.addWorksheet('Trendyol Arama Sonuçları')
-
+  const settings = await getSettingsJson()
+  const attributeKeys = settings.attributes
   const keys = new Set<string>()
   let maxImageCount = 0
   jsonData.results = jsonData.results
@@ -443,12 +477,17 @@ export const createExcelFile: SaveSearch = async (jsonData) => {
         const row: { [key: string]: string } = {}
         keys.forEach((key) => {
           if (key === 'isim' && result.details && (result.details as any).isim) {
-            // Combine isim and attributes values
+            // Combine isim and attributes values, only include attributes whose keys are NOT in attributeKeys
             let combinedIsim = (result.details as any).isim
 
             if ((result.details as any).attributes) {
-              const attributesValues = Object.values((result.details as any).attributes).join(' ')
-              combinedIsim += ` ${attributesValues}` // Add a space between isim and attributes
+              const attributesEntries = Object.entries((result.details as any).attributes)
+              const filteredValues = attributesEntries
+                .filter(([attrKey]) => !attributeKeys || !attributeKeys.includes(attrKey))
+                .map(([, value]) => value)
+              if (filteredValues.length > 0) {
+                combinedIsim += ` ${filteredValues.join(' ')}`
+              }
             }
 
             row[key] = combinedIsim
@@ -482,12 +521,17 @@ export const createExcelFile: SaveSearch = async (jsonData) => {
       const row: { [key: string]: string } = {}
       keys.forEach((key) => {
         if (key === 'isim' && result.details && (result.details as any).isim) {
-          // Combine isim and attributes values
+          // Combine isim and attributes values, only include attributes whose keys are NOT in attributeKeys
           let combinedIsim = (result.details as any).isim
 
           if ((result.details as any).attributes) {
-            const attributesValues = Object.values((result.details as any).attributes).join(' ')
-            combinedIsim += ` ${attributesValues}` // Add a space between isim and attributes
+            const attributesEntries = Object.entries((result.details as any).attributes)
+            const filteredValues = attributesEntries
+              .filter(([attrKey]) => !attributeKeys || !attributeKeys.includes(attrKey))
+              .map(([, value]) => value)
+            if (filteredValues.length > 0) {
+              combinedIsim += ` ${filteredValues.join(' ')}`
+            }
           }
 
           row[key] = combinedIsim
@@ -519,11 +563,13 @@ export const createExcelFile: SaveSearch = async (jsonData) => {
   // Excel dosyasını yaz
   const filePath = `${rootDir}/${jsonData.date}.xlsx`
   await workbook.xlsx.writeFile(filePath)
-  exec(`start "" "${filePath}"`, (error) => {
-    if (error) {
-      console.error(`Error opening file: ${error}`)
-    }
-  })
+  if (process.platform === 'win32') {
+    exec(`start "" "${filePath}"`, (error) => {
+      if (error) {
+        console.error(`Error opening file: ${error}`)
+      }
+    })
+  }
   console.log(`Excel file created successfully at ${filePath}`)
 }
 

@@ -34,6 +34,7 @@ declare global {
       saveSearch: SaveSearch
       getSearch: GetSearch
       deleteSearch: DeleteSearch
+      getSearchAttributes: () => string[]
       createExcelFile: SaveSearch
     }
   }

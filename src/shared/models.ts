@@ -27,6 +27,7 @@ export type Settings = {
   productNumber: number
   variant: boolean
   telegramSettings?: TelegramSettings
+  attributes?: string[]
 }
 export type TelegramSettings = {
   apiKey: string

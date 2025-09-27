@@ -51,6 +51,8 @@ try {
 
     getSearch: () => ipcRenderer.invoke('getSearch'),
 
+    getSearchAttributes: () => ipcRenderer.invoke('getSearchAttributes'),
+
     saveStockLinks: (jsondata: string) => ipcRenderer.invoke('saveStockLinks', jsondata),
 
     loadStockLinks: () => ipcRenderer.invoke('loadStockLinks'),
