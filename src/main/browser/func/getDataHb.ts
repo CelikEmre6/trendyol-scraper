@@ -234,9 +234,6 @@ async function initializeCrawlers() {
 }
 
 // Rest of your functions remain the same...
-async function fetchScriptContent(url: string) {
-    // ... existing fetchScriptContent code ...
-}
 
 export const getDataHB = async (url: string, onProgress?: (progress: string) => void) => {
     results.length = 0;
