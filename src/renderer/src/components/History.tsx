@@ -4,15 +4,25 @@ import { Button, message, Table } from 'antd'
 import { useSetAtom } from 'jotai'
 import { useState } from 'react'
 import { AttrModal } from './attrModal'
+import AttributeModal from './attributesModal'
 
 export const History = () => {
   const { selectedSearch } = useSearchResultsTable()
   const deleteSearch = useSetAtom(deleteSearchResultAtom)
   const setSearchResults = useSetAtom(saveSearchResultsAtom)
   const [isAttrModalOpen, setIsAttrModalOpen] = useState(false)
+  const [openAttributes, setOpenAttributes] = useState<any | null>(null)
 
   const handleDelete = async () => {
     await deleteSearch()
+  }
+  const handleOpenAttributes = (record: any) => {
+    console.log('record', record.details.attributes)
+    setOpenAttributes(record.details.attributes)
+  }
+  // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
+  const handleCloseAttributes = () => {
+    setOpenAttributes(null)
   }
 
   const columns = [
@@ -89,6 +99,19 @@ export const History = () => {
         const renkB = b.details?.attributes?.Renk || ''
         return renkA.localeCompare(renkB)
       }
+    },
+    {
+      title: 'Özellikler',
+      key: 'attributesButton',
+      dataIndex: 'attributes',
+      width: 70,
+      render: (_: any, record: any) => {
+        return (
+          <Button type="primary" onClick={() => handleOpenAttributes(record)}>
+            Özellikler
+          </Button>
+        )
+      }
     }
   ]
 
@@ -160,6 +183,11 @@ export const History = () => {
           rowExpandable: (record: any) => record.name !== 'Not Expandable'
         }}
         style={{ userSelect: 'text' }}
+      />
+      <AttributeModal
+        open={!!openAttributes}
+        onClose={handleCloseAttributes}
+        attributes={openAttributes || []}
       />
     </div>
   )
