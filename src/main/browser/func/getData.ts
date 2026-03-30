@@ -145,24 +145,21 @@ export const getData = async (url: string, onProgress?: (progress: string) => vo
   const links: string[] = []
   const productGroups: string[] = []
   let pageUrl = ''
-  if (url.includes('?pi=')) {
-    pageUrl = url.split('?pi=')[0]
-  } else {
-    pageUrl = url
-  }
+  let extraQueryParams = ''
 
-  function getPathAfterTrendyol(url: string): string {
-    const baseUrl = 'trendyol.com/'
-    const index = url.indexOf(baseUrl)
-
-    if (index !== -1) {
-      return url.substring(index + baseUrl.length)
-    } else {
-      return 'none'
+  try {
+    const urlObj = new URL(url)
+    if (!urlObj.hostname.includes('trendyol.com')) {
+      return allData
     }
+    urlObj.searchParams.delete('pi')
+    pageUrl = urlObj.pathname.replace(/^\//, '') // "sr" veya "kadin-gomlek-x-g1-c75"
+    extraQueryParams = urlObj.searchParams.toString() // "wc=104103&prc=50-200&..."
+  } catch {
+    return allData
   }
-  pageUrl = getPathAfterTrendyol(pageUrl)
-  if (pageUrl === 'none') {
+
+  if (!pageUrl) {
     return allData
   }
   if (typeof onProgress === 'function') {
@@ -178,8 +175,9 @@ export const getData = async (url: string, onProgress?: (progress: string) => vo
       //   `https://public.trendyol.com/discovery-web-searchgw-service/v2/api/infinite-scroll/erkek-kazak-x-g2-c1092?pi=${page}`
       // )
 
+      const extraParamsStr = extraQueryParams ? `&${extraQueryParams}` : ''
       const response = await axios.get(
-        `https://apigw.trendyol.com/discovery-sfint-search-service/api/search/products?pathModel=${pageUrl}&pi=${page}&channelId=1&storefrontId=1&culture=tr-TR`,
+        `https://apigw.trendyol.com/discovery-sfint-search-service/api/search/products?pathModel=${pageUrl}${extraParamsStr}&pi=${page}&channelId=1&storefrontId=1&culture=tr-TR`,
         {
           headers: {
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
