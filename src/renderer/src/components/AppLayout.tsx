@@ -1,7 +1,7 @@
 import { useSettings } from '@renderer/hooks/useSettings'
 import { licance_api_url } from '@shared/constants'
 import { ConfigProvider, Input, Tabs, TabsProps } from 'antd'
-import { ComponentProps, forwardRef, useEffect, useState } from 'react'
+import { ComponentProps, forwardRef, useCallback, useEffect, useState } from 'react'
 import { Triangle } from 'react-loader-spinner'
 import { twMerge } from 'tailwind-merge'
 import { validate } from 'uuid'
@@ -105,7 +105,7 @@ export const Content = forwardRef<HTMLDivElement, ComponentProps<'div'>>(
     //     })
     // }
 
-    const validateLicense = async (key: string) => {
+    const validateLicense = useCallback(async (key: string) => {
       return new Promise<boolean>((resolve, reject) => {
         fetch(licance_api_url + '/check', {
           method: 'POST',
@@ -116,16 +116,32 @@ export const Content = forwardRef<HTMLDivElement, ComponentProps<'div'>>(
             macAddress: settings?.macAddress,
             key: key
           })
-        }).then((res) => {
-          if (res.status === 200) {
-            resolve(true)
-            // checkVersion().then()
-          } else {
-            reject(false)
-          }
         })
+          .then((res) => {
+            return res.json()
+          })
+          .then((data) => {
+            console.log(data)
+            if (data?.status === 'ok') {
+              if (
+                data.type &&
+                (settings?.licanceType !== data.type || settings?.licancePlan !== data.plan)
+              ) {
+                handleUpdateSettings({
+                  ...settings,
+                  licanceType: data.type,
+                  licancePlan: data.plan
+                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                } as any)
+              }
+              resolve(true)
+            } else {
+              reject()
+            }
+          })
+          .catch(reject)
       })
-    }
+    }, [settings?.macAddress, settings?.licanceType, settings?.licancePlan])
 
     const activateLicense = async (key: string) => {
       const data = fetch(licance_api_url + '/activate', {

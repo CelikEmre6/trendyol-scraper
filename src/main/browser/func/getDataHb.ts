@@ -1,11 +1,11 @@
 /* eslint-disable prettier/prettier */
 /* eslint-disable no-unsafe-finally */
+import { getSettingsJson } from '@/lib';
 import { CheerioCrawler, Configuration } from 'crawlee';
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 const config = Configuration.getGlobalConfig();
 config.set('persistStorage', false);
-let pageCount = 1;
 const detailLinks = [] as string[];
 const urls = [] as string[];
 const results = [] as any[];
@@ -29,7 +29,10 @@ async function initializeCrawlers(onProgress?: (progress: string) => void) {
                         items = json.itemListElement;
                         return false; // break
                     }
-                } catch (e) { /* empty */ }
+                    return true;
+                } catch (e) {
+                    return true
+                }
             });
 
             // 2️⃣ Fallback: look for "(xx ürün)" or "xx ürün" text in any element (more flexible)
@@ -45,7 +48,6 @@ async function initializeCrawlers(onProgress?: (progress: string) => void) {
             let links = [] as string[]
             console.log(`Toplam ilan sayısı: ${ilanCount}`);
             if (items.length > 0) {
-                pageCount = Math.ceil(ilanCount / items.length);
                 const links2 = items.map((item: any) => item.item.offers.url);
                 links = links2.filter((href: string) => href && href!.startsWith('https://www.hepsiburada.com'));
             } else {
@@ -54,7 +56,6 @@ async function initializeCrawlers(onProgress?: (progress: string) => void) {
                     .filter(href => href && !href.includes('adservice'));
                 const baseUrl = 'https://www.hepsiburada.com';
                 links = linkElements.map(href => href!.startsWith('http') ? href! : baseUrl + href);
-                pageCount = Math.ceil(ilanCount / 36);
             }
             log.info(`Found links: ${links.length}`);
             detailLinks.push(...links);
@@ -97,18 +98,18 @@ async function initializeCrawlers(onProgress?: (progress: string) => void) {
                 }
 
                 const title = product?.product?.name || product?.title || '';
-                const barcode = product.product.barcode || '';
-                const brand = product.product.brand || '';
-                const categories = product.product.categories || [];
+                const barcode = product?.product?.barcode || '';
+                const brand = product?.product?.brand || '';
+                const categories = product?.product?.categories || [];
                 const category = categories.length > 0 ? categories[categories.length - 1].categoryName : undefined;
                 const categoryHierarchy = categories.map((c: any) => c.categoryName).join(' > ') || '';
                 const description = $('.productDescriptionContent').html()?.trim() || '';
                 const groupId = product?.product?.productId || '';
-                const sku = product.product.sku || '';
+                const sku = product?.product?.sku || '';
                 const price = product?.product?.prices
                     ? Math.min(...product.product.prices.map((p: any) => Number(p.value)))
                     : undefined;
-                const color = product.activeVariant?.values?.Renk || '';
+                const color = product?.activeVariant?.values?.Renk || '';
                 const expGroup = product?.product?.expends?.find((a: any) => a?.groupName === '');
 
                 const attributes = expGroup
@@ -160,9 +161,9 @@ async function initializeCrawlers(onProgress?: (progress: string) => void) {
                         marka: brand ? String(brand).trim() : undefined,
                         Kategori: category,
                         KategoriHiyerarsi: categoryHierarchy,
-                        saticiAdi: product.product.merchantName,
-                        saticiId: product.product.merchantId,
-                        saticiSehri: product.product.merchantCity,
+                        saticiAdi: product?.product?.merchantName,
+                        saticiId: product?.product?.merchantId,
+                        saticiSehri: product?.product?.merchantCity,
                         sizes: sizes,
                         color: color,
                         attributes: attributes,
@@ -171,8 +172,8 @@ async function initializeCrawlers(onProgress?: (progress: string) => void) {
                         vergi: product?.product?.taxVatRate,
                         ortalamaDegerlendirme: product?.product?.reviews?.customerReviewScore,
                         toplamDegerlendirmeSayısı: product?.product?.reviews?.customerReviewCount,
-                        bedavaKargo: typeof product.product.shipmentInformation.freeShipping !== 'undefined'
-                            ? product.product.shipmentInformation.freeShipping
+                        bedavaKargo: typeof product?.product?.shipmentInformation?.freeShipping !== 'undefined'
+                            ? product?.product?.shipmentInformation?.freeShipping
                                 ? 'bedava'
                                 : 'bedava değil'
                             : 'belirtilmemiş'
@@ -190,7 +191,7 @@ async function initializeCrawlers(onProgress?: (progress: string) => void) {
                 throw error;
             } finally {
                 completed++;
-                const progress = ((completed / detailLinks.length) * 100).toFixed(2);
+                const progress = detailLinks.length > 0 ? ((completed / detailLinks.length) * 100).toFixed(2) : '0.00';
                 if (typeof onProgress === 'function') {
                     onProgress(`${progress}%`);
                 }
@@ -207,6 +208,11 @@ export const getDataHB = async (url: string, onProgress?: (progress: string) => 
     results.length = 0;
     urls.length = 0;
     detailLinks.length = 0;
+    completed = 0;
+    const settings = await getSettingsJson();
+    const productNumber = settings?.productNumber || 100;
+    const trial = settings?.licanceType === 'trial'
+    const pageCount = trial ? 1 : Math.ceil(productNumber / 36); // Hepsiburada'da sayfa başına 36 ürün var
     const { summaryCrawler, listCrawler, detailCrawler } = await initializeCrawlers(onProgress);
 
     let pageUrl = '';

@@ -57,6 +57,7 @@ export const Settings = () => {
         </div>
         <div className="flex flex-col space-y-2 min-w-[600px]">
           <Checkbox
+            disabled={settings?.licanceType === 'trial'}
             checked={settings?.variant}
             onChange={(e) =>
               handleUpdateSettings({
@@ -66,6 +67,19 @@ export const Settings = () => {
             }
           >
             Varyantlar Kontrol Edilsin mi ?
+          </Checkbox>
+        </div>
+        <div className="flex flex-col space-y-2 min-w-[600px]">
+          <Checkbox
+            checked={settings?.combineIsim ?? false}
+            onChange={(e) =>
+              handleUpdateSettings({
+                ...settings!,
+                combineIsim: e.target.checked
+              })
+            }
+          >
+            Ürün İsmi + Özellikler Birleştirilsin mi ? 
           </Checkbox>
         </div>
 

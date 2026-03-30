@@ -72,7 +72,7 @@ export const Search = () => {
             setLoading(true)
             try {
               // Progress sıfırken loading mesajını sürekli göster
-              message.loading('Ürün Linkleri Toplanıyor', 15) // Süresiz bir loading mesajı
+              message.loading('Ürün Linkleri Toplanıyor', 3) // Süresiz bir loading mesajı
               const data = await window.context.getSearchResults(url!)
               const newSearch = {
                 results: data.map((item) => ({

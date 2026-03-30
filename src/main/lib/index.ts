@@ -139,9 +139,12 @@ export const deleteNote: DeleteNote = async (filename) => {
 
 export const getSearchResults = async (url: string, onProgress?: (progress: string) => void) => {
   let data = [] as any
+  const settings = await getSettingsJson()
   if (url.includes('trendyol.com')) {
     data = await getData(url, onProgress)
   } else {
+    if (settings.licancePlan !== 'pro') return []
+    console.log('Hepsiburada linki tespit edildi, veriler çekiliyor...')
     data = await getDataHB(url, onProgress)
   }
   return data
@@ -262,7 +265,7 @@ export const getSettingsJson: GetSettingsJson = async () => {
         {
           macAddress: macAddress,
           ProductNumber: 1000,
-          variant: true,
+          variant: false,
           comment: false,
           commentNumber: 20
         },
@@ -276,7 +279,7 @@ export const getSettingsJson: GetSettingsJson = async () => {
     return {
       macAddress: macAddress,
       ProductNumber: 1000,
-      variant: true,
+      variant: false,
       comment: false,
       commentNumber: 20
     }
@@ -407,6 +410,7 @@ export const createExcelFile: SaveSearch = async (jsonData) => {
   const worksheet = workbook.addWorksheet('Trendyol Arama Sonuçları')
   const settings = await getSettingsJson()
   const attributeKeys = settings.attributes
+  const combineIsim = settings.combineIsim ?? false
   const keys = new Set<string>()
   let maxImageCount = 0
   jsonData.results = jsonData.results
@@ -477,20 +481,17 @@ export const createExcelFile: SaveSearch = async (jsonData) => {
         const row: { [key: string]: string } = {}
         keys.forEach((key) => {
           if (key === 'isim' && result.details && (result.details as any).isim) {
-            // Combine isim and attributes values, only include attributes whose keys are NOT in attributeKeys
-            let combinedIsim = (result.details as any).isim
-
-            if ((result.details as any).attributes) {
+            let finalIsim = (result.details as any).isim
+            if (combineIsim && (result.details as any).attributes) {
               const attributesEntries = Object.entries((result.details as any).attributes)
               const filteredValues = attributesEntries
                 .filter(([attrKey]) => !attributeKeys || !attributeKeys.includes(attrKey))
                 .map(([, value]) => value)
               if (filteredValues.length > 0) {
-                combinedIsim += ` ${filteredValues.join(' ')}`
+                finalIsim += ` ${filteredValues.join(' ')}`
               }
             }
-
-            row[key] = combinedIsim
+            row[key] = finalIsim
           } else if (key in result) {
             row[key] = result[key]
           } else if (result.details && key in result.details) {
@@ -521,20 +522,17 @@ export const createExcelFile: SaveSearch = async (jsonData) => {
       const row: { [key: string]: string } = {}
       keys.forEach((key) => {
         if (key === 'isim' && result.details && (result.details as any).isim) {
-          // Combine isim and attributes values, only include attributes whose keys are NOT in attributeKeys
-          let combinedIsim = (result.details as any).isim
-
-          if ((result.details as any).attributes) {
+          let finalIsim = (result.details as any).isim
+          if (combineIsim && (result.details as any).attributes) {
             const attributesEntries = Object.entries((result.details as any).attributes)
             const filteredValues = attributesEntries
               .filter(([attrKey]) => !attributeKeys || !attributeKeys.includes(attrKey))
               .map(([, value]) => value)
             if (filteredValues.length > 0) {
-              combinedIsim += ` ${filteredValues.join(' ')}`
+              finalIsim += ` ${filteredValues.join(' ')}`
             }
           }
-
-          row[key] = combinedIsim
+          row[key] = finalIsim
         } else if (key in result) {
           row[key] = result[key]
         } else if (result.details && key in result.details) {

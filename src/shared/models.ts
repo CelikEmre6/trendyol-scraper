@@ -24,8 +24,11 @@ export type NoteContent = string
 export type Settings = {
   macAddress: string
   licanceKey?: string
+  licanceType?: string
+  licancePlan?: string
   productNumber: number
   variant: boolean
+  combineIsim?: boolean
   telegramSettings?: TelegramSettings
   attributes?: string[]
 }

@@ -56,24 +56,24 @@ async function fetchScriptContent(url: string) {
             jsonObject.product.merchantListing.merchant.registeredEmailAddress || 'Belirtilmemiş',
           code: jsonObject.product.productCode || 'Belirtilmemiş',
           indirimliFiyati:
-            jsonObject.product.merchantListing.winnerVariant.price.discountedPrice.value ||
+            jsonObject.product.merchantListing.winnerVariant.price.discountedPrice.value ??
             'Belirtilmemiş',
           SatisFiyati:
-            jsonObject.product.merchantListing.winnerVariant.price.sellingPrice.value ||
+            jsonObject.product.merchantListing.winnerVariant.price.sellingPrice.value ??
             'Belirtilmemiş',
           OrjinalFiyati:
-            jsonObject.product.merchantListing.winnerVariant.price.originalPrice.value ||
+            jsonObject.product.merchantListing.winnerVariant.price.originalPrice.value ??
             'Belirtilmemiş',
           KuponluFiyatı:
-            jsonObject.product.merchantListing.winnerVariant.price.couponApplicablePrice.value ||
+            jsonObject.product.merchantListing.winnerVariant.price.couponApplicablePrice.value ??
             'Belirtilmemiş',
           // SepetSayısı: jsonObject.product.socialProof.basketCount || 'Belirtilmemiş',
           // GoruntulenmeSayısı: jsonObject.product.socialProof.pageViewCount || 'Belirtilmemiş',
           // favoriSayısı: jsonObject.product.socialProof.favoriteCount || 'Belirtilmemiş',
-          vergi: jsonObject.product.tax || 'Belirtilmemiş',
-          ortalamaDegerlendirme: jsonObject.product.ratingScore.averageRating || 'Belirtilmemiş',
-          toplamDegerlendirmeSayısı: jsonObject.product.ratingScore.totalCount || 'Belirtilmemiş',
-          toplamYorumSayısı: jsonObject.product.ratingScore.commentCount || 'Belirtilmemiş',
+          vergi: jsonObject.product.tax ?? 'Belirtilmemiş',
+          ortalamaDegerlendirme: jsonObject.product.ratingScore.averageRating ?? 'Belirtilmemiş',
+          toplamDegerlendirmeSayısı: jsonObject.product.ratingScore.totalCount ?? 'Belirtilmemiş',
+          toplamYorumSayısı: jsonObject.product.ratingScore.commentCount ?? 'Belirtilmemiş',
           bedavaKargo:
             typeof jsonObject.product.merchantListing.winnerVariant.freeCargo !== 'undefined'
               ? jsonObject.product.merchantListing.winnerVariant.freeCargo
@@ -145,14 +145,10 @@ export const getData = async (url: string, onProgress?: (progress: string) => vo
   const links: string[] = []
   const productGroups: string[] = []
   let pageUrl = ''
-  if (url.includes('pi=')) {
-    pageUrl = url.split('pi=')[0] + 'pi='
+  if (url.includes('?pi=')) {
+    pageUrl = url.split('?pi=')[0]
   } else {
-    if (url.includes('?')) {
-      pageUrl = url + '&pi='
-    } else {
-      pageUrl = url + '?pi='
-    }
+    pageUrl = url
   }
 
   function getPathAfterTrendyol(url: string): string {
@@ -174,20 +170,33 @@ export const getData = async (url: string, onProgress?: (progress: string) => vo
   }
   const settings = await getSettingsJson()
   const productNumber = settings.productNumber
+  const trial = settings.licanceType === 'trial'
   const variant = settings.variant
   try {
-    for (let page = 1; page <= 250; page++) {
+    for (let page = 1; page <= (trial ? 1 : 250); page++) {
       // const response = await axios.get(
       //   `https://public.trendyol.com/discovery-web-searchgw-service/v2/api/infinite-scroll/erkek-kazak-x-g2-c1092?pi=${page}`
       // )
+
       const response = await axios.get(
-        `https://apigw.trendyol.com/discovery-web-searchgw-service/v2/api/infinite-scroll/${pageUrl + page}`
+        `https://apigw.trendyol.com/discovery-sfint-search-service/api/search/products?pathModel=${pageUrl}&pi=${page}&channelId=1&storefrontId=1&culture=tr-TR`,
+        {
+          headers: {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+            'CF-IPCountry': 'TR',
+            'accept-language': 'tr,en-US;q=0.9,en;q=0.8',
+            Cookie: 'countryCode=TR;'
+          }
+        }
       )
       const data = response.data
-      const products = data.result?.products || []
+      const products = data.products || []
 
       for (const product of products) {
-        const groupId = product.productGroupId
+        //const productUrl = 'https://www.trendyol.com' + product.url
+        //console.log('Product URL:', productUrl)
+
+        const groupId = product.groupId
         productGroups.push(groupId)
         if (!links.includes('https://www.trendyol.com' + product.url)) {
           links.push('https://www.trendyol.com' + product.url)
@@ -212,24 +221,36 @@ export const getData = async (url: string, onProgress?: (progress: string) => vo
     }
     return chunks
   }
+
+  console.log('Product Groups:', productGroups)
+
   if (variant) {
     const uniqueProductGroups = Array.from(new Set(productGroups))
     const productGroupsChunks = chunkArray(uniqueProductGroups, 24)
 
     await Promise.all(
       productGroupsChunks.map(async (group) => {
-        const queryParams = group.map((id) => `productGroupIds=${id}`).join('&')
-        const url = `https://apigw.trendyol.com/discovery-web-websfxproductgroups-santral/api/v2/product-groups?${queryParams}`
+        const queryParams = group.map((id) => `productGroupIds=${id}`).join('%')
+        const url = `https://apigw.trendyol.com/discovery-sfint-search-service/api/search/color-variants?${queryParams}&channelId=1&storefrontId=1&culture=tr-TR`
 
+        //https://apigw.trendyol.com/discovery-sfint-search-service/api/search/color-variants?productGroupIds=623651327%2C643901049%2C234024605%2C571244531%2C90397027%2C704499519%2C727216440%2C107251170%2C745205428%2C256578452%2C228007942%2C623651327%2C691062543%2C645978844%2C824206919%2C3965344%2C692422845%2C681017431%2C112962834%2C616607%2C851800016%2C577118743%2C691063955%2C839513341&channelId=1&storefrontId=1&culture=tr-TR
         try {
-          const response = await axios.get(url)
-          const results = response.data?.result || []
+          const response = await axios.get(url, {
+            headers: {
+              'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+              'CF-IPCountry': 'TR',
+              'accept-language': 'tr,en-US;q=0.9,en;q=0.8',
+              Cookie: 'countryCode=TR;'
+            }
+          })
+          const results = response.data || {}
 
           Object.keys(results).forEach((groupId) => {
             const products = results[groupId] || []
 
             products.forEach((product: any) => {
               links.push('https://www.trendyol.com' + product.url)
+              console.log('Variant Product URL:', 'https://www.trendyol.com' + product.url)
             })
           })
         } catch (error) {
