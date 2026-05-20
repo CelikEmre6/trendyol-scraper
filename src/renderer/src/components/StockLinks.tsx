@@ -114,10 +114,11 @@ export const StockLinksComponent = () => {
         key: 'TekilUrun'
       })
       window.location.reload()
-    } catch (error) {
+    } catch (error: any) {
       console.error(error)
+      const errorMessage = error?.message?.replace(/Error invoking remote method '.*': Error: /, '') || 'Veriler Alınamadı'
       message.error({
-        content: 'Veriler Alınamadı',
+        content: errorMessage,
         key: 'TekilUrun'
       })
     } finally {

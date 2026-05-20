@@ -342,11 +342,17 @@ export const getSearch: GetSearch = async () => {
     .filter((fileName) => fileName !== 'links.json')
 
   const data = search.map(async (fileName) => {
-    const file = await readFile(`${rootDir}/${fileName}`, { encoding: fileEncoding })
-    return JSON.parse(file) as Search
+    try {
+      const file = await readFile(`${rootDir}/${fileName}`, { encoding: fileEncoding })
+      return JSON.parse(file) as Search
+    } catch (error) {
+      console.error(`Error reading or parsing file ${fileName}:`, error)
+      return null
+    }
   })
 
-  return Promise.all(data)
+  const results = await Promise.all(data)
+  return results.filter((result) => result !== null) as Search[]
 }
 
 export const getSearchAttributes = async () => {
@@ -365,17 +371,21 @@ export const getSearchAttributes = async () => {
   const attributeKeys = new Set<string>()
 
   for (const fileName of search) {
-    const file = await readFile(`${getRootDir()}/${fileName}`, { encoding: fileEncoding })
-    const parsed = JSON.parse(file) as Search
+    try {
+      const file = await readFile(`${getRootDir()}/${fileName}`, { encoding: fileEncoding })
+      const parsed = JSON.parse(file) as Search
 
-    if (parsed.results && Array.isArray(parsed.results)) {
-      parsed.results.forEach((result: any) => {
-        if (result.details && result.details.attributes) {
-          Object.keys(result.details.attributes).forEach((key) => {
-            attributeKeys.add(key)
-          })
-        }
-      })
+      if (parsed.results && Array.isArray(parsed.results)) {
+        parsed.results.forEach((result: any) => {
+          if (result.details && result.details.attributes) {
+            Object.keys(result.details.attributes).forEach((key) => {
+              attributeKeys.add(key)
+            })
+          }
+        })
+      }
+    } catch (error) {
+      console.error(`Error parsing file ${fileName} for attributes:`, error)
     }
   }
 
@@ -402,6 +412,49 @@ export const deleteSearch: DeleteSearch = async (filename) => {
   console.info(`Deleting SearchResults: ${filename}`)
   await remove(`${rootDir}/${filename}.json`)
   return true
+}
+
+export const cleanEmptySearches = async (): Promise<number | false> => {
+  const rootDir = getRootDir()
+
+  const { response } = await dialog.showMessageBox({
+    type: 'warning',
+    title: 'Boş Aramaları Temizle',
+    message: `Sonucu olmayan (0 ürün) tüm arama geçmişi kayıtlarını silmek istediğinize emin misiniz?`,
+    buttons: ['Sil', 'İptal'],
+    defaultId: 1,
+    cancelId: 1
+  })
+
+  if (response === 1) {
+    return false
+  }
+
+  const searchFiles = await readdir(rootDir, {
+    encoding: fileEncoding,
+    withFileTypes: false
+  })
+
+  const search = searchFiles
+    .filter((fileName) => fileName.endsWith('.json'))
+    .filter((fileName) => fileName !== 'settings.json')
+    .filter((fileName) => fileName !== 'links.json')
+
+  let deletedCount = 0
+  for (const fileName of search) {
+    try {
+      const file = await readFile(`${rootDir}/${fileName}`, { encoding: fileEncoding })
+      const parsed = JSON.parse(file) as Search
+      if (!parsed.results || parsed.results.length === 0) {
+        await remove(`${rootDir}/${fileName}`)
+        deletedCount++
+      }
+    } catch (error) {
+      console.error(`Error deleting empty search ${fileName}:`, error)
+    }
+  }
+
+  return deletedCount
 }
 
 export const createExcelFile: SaveSearch = async (jsonData) => {

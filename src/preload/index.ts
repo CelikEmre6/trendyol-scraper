@@ -61,6 +61,7 @@ try {
       ipcRenderer.invoke('loadStockLinksFromExcel', path, overWrite),
 
     deleteSearch: (date: Parameters<DeleteSearch>[0]) => ipcRenderer.invoke('deleteSearch', date),
+    cleanEmptySearches: () => ipcRenderer.invoke('cleanEmptySearches'),
 
     createExcelFile: (search: Parameters<SaveSearch>[0]) =>
       ipcRenderer.invoke('createExcelFile', search)

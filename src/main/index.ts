@@ -15,7 +15,8 @@ import {
   saveSearch,
   saveStockLinks,
   writeNote,
-  writeSettingsJson
+  writeSettingsJson,
+  cleanEmptySearches
 } from '@/lib'
 import { electronApp, is, optimizer } from '@electron-toolkit/utils'
 import {
@@ -107,6 +108,7 @@ app.whenReady().then(() => {
   ipcMain.handle('saveSearch', (_, ...args: Parameters<SaveSearch>) => saveSearch(...args))
   ipcMain.handle('getSearch', (_, ...args: Parameters<GetSearch>) => getSearch(...args))
   ipcMain.handle('deleteSearch', (_, ...args: Parameters<DeleteSearch>) => deleteSearch(...args))
+  ipcMain.handle('cleanEmptySearches', () => cleanEmptySearches())
   ipcMain.handle('getSearchAttributes', () => getSearchAttributes())
   ipcMain.handle('createExcelFile', (_, ...args: Parameters<SaveSearch>) =>
     createExcelFile(...args)

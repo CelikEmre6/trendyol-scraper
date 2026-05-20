@@ -86,9 +86,10 @@ export const Search = () => {
               await setSearchResults(newSearch)
               refresh()
               message.success('Veriler Alındı')
-            } catch (error) {
+            } catch (error: any) {
               console.error(error)
-              message.error('Veriler Alınamadı')
+              const errorMessage = error?.message?.replace(/Error invoking remote method '.*': Error: /, '') || 'Veriler Alınamadı'
+              message.error(errorMessage)
             } finally {
               setLoading(false)
             }

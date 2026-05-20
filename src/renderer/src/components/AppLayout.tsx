@@ -118,6 +118,9 @@ export const Content = forwardRef<HTMLDivElement, ComponentProps<'div'>>(
           })
         })
           .then((res) => {
+            if (!res.ok) {
+              throw new Error('SERVER_ERROR')
+            }
             return res.json()
           })
           .then((data) => {
@@ -165,6 +168,8 @@ export const Content = forwardRef<HTMLDivElement, ComponentProps<'div'>>(
               licanceKey: key
               // eslint-disable-next-line @typescript-eslint/no-explicit-any
             } as any)
+            console.log("Lisans Anahtarı Doğrulandı")
+            //a58d11d4-d309-45e9-85dd-75ffb9bd5ad2
             setLoading(false)
           }
         })
@@ -177,12 +182,17 @@ export const Content = forwardRef<HTMLDivElement, ComponentProps<'div'>>(
             console.log('Lisans anahtarı geçerli')
             setLoading(false)
           })
-          .catch(() => {
-            handleUpdateSettings({
-              ...settings,
-              licanceKey: undefined
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            } as any)
+          .catch((err) => {
+            if (err?.message === 'INVALID_KEY') {
+              handleUpdateSettings({
+                ...settings,
+                licanceKey: undefined
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              } as any)
+            } else {
+              console.log('Lisans doğrulama ağ/sunucu hatası nedeniyle atlandı')
+              setLoading(false)
+            }
           })
       }
     }, [validateLicense, settings?.licanceKey])

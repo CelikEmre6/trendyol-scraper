@@ -16,3 +16,4 @@ export type SaveSearch = (search: Search) => Promise<void>
 export type GetSearch = () => Promise<Search[]>
 export type DeleteSearch = (date: string) => Promise<boolean>
 export type loadStockLinksFromExcel = (path: string, overWrite: boolean) => Promise<string[]>
+export type CleanEmptySearches = () => Promise<number | false>

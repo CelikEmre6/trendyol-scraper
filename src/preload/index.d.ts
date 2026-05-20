@@ -2,6 +2,7 @@ import {
   CreateNote,
   DeleteNote,
   DeleteSearch,
+  CleanEmptySearches,
   GetNotes,
   GetSearch,
   GetSettingsJson,
@@ -34,6 +35,7 @@ declare global {
       saveSearch: SaveSearch
       getSearch: GetSearch
       deleteSearch: DeleteSearch
+      cleanEmptySearches: CleanEmptySearches
       getSearchAttributes: () => string[]
       createExcelFile: SaveSearch
     }

@@ -178,7 +178,28 @@ export const deleteSearchResultAtom = atom(null, async (get, set) => {
     searchs.filter((searchs) => searchs.date !== selectedSearch.date)
   )
 
-  set(selectedNoteIndexAtom, null)
+  set(selectedSearchIndexAtom, null)
+})
+
+export const cleanEmptySearchesAtom = atom(null, async (get, set) => {
+  const deletedCount = await window.context.cleanEmptySearches()
+  if (deletedCount === false || deletedCount === 0) return deletedCount
+
+  const searchs = get(searchsAtom)
+  if (searchs) {
+    set(
+      searchsAtom,
+      searchs.filter((search) => search.results && search.results.length > 0)
+    )
+    set(selectedSearchIndexAtom, null)
+  }
+  return deletedCount
+})
+
+export const refreshSearchesAtom = atom(null, async (_get, set) => {
+  const freshSearches = await getSearch()
+  set(searchsAtom, freshSearches)
+  set(selectedSearchIndexAtom, null)
 })
 
 export const stockLinksAtom = atom<string[]>([]) // Başlangıçta boş bir dizi

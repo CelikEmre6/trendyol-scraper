@@ -29,7 +29,9 @@ export const NotePreview = ({
       {...props}
     >
       <h3 className="mb-1 font-bold truncate">{description}</h3>
-      <span className="inline-blocks w-full mb-2 text-xs font-light text-left">{dateTime}</span>
+      <span className="inline-block w-full mb-2 text-xs font-light text-left">
+        {dateTime} - {props.results?.length || 0} Ürün
+      </span>
     </div>
   )
 }

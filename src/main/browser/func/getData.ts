@@ -18,23 +18,31 @@ async function fetchScriptContent(url: string) {
       .get()
 
     const matchingScript = scriptContents.find((content) =>
-      content?.includes('envoy_flash-sales-banner__PROPS')
+      content?.includes('__envoy__SHARED_PROPS')
     )
-    // const regex = /window\["__envoy_flash-sales-banner__PROPS"\]\s*=\s*(\{[\s\S]*?\})\s*;/
 
     let match: string | undefined
     if (matchingScript) {
-      match = matchingScript.split('window["__envoy_flash-sales-banner__PROPS"]=')[1]
+      match = matchingScript.split('window["__envoy__SHARED_PROPS"]=')[1]
     }
 
     if (match) {
       const jsonObject = JSON.parse(match)
-      const attributes = jsonObject.product.attributes.reduce((acc, attribute) => {
-        const keyName = attribute.key.name
-        const valueName = attribute.value.name
-        acc[keyName] = valueName
-        return acc
-      }, {})
+
+      if (!jsonObject || !jsonObject.product) {
+        console.log('No product data found in the parsed script.')
+        return {}
+      }
+
+      const attributes = (jsonObject.product.attributes || []).reduce(
+        (acc: any, attribute: any) => {
+          const keyName = attribute?.key?.name
+          const valueName = attribute?.value?.name
+          if (keyName && valueName) acc[keyName] = valueName
+          return acc
+        },
+        {}
+      )
       const productId = jsonObject.product.id
       const descData = await axios.get(
         `https://apigw.trendyol.com/discovery-pdp-websfxcomponentread-santral/${productId}`
@@ -42,96 +50,60 @@ async function fetchScriptContent(url: string) {
       const descDataJson = descData.data.result
       const dictionary: any = {
         url: url,
-        groupId: jsonObject.product.productGroupId,
+        groupId: jsonObject.product?.productGroupId,
         details: {
-          isim: jsonObject.product.name || 'Belirtilmemiş',
-          productId: jsonObject.product.id || 'Belirtilmemiş',
-          marka: jsonObject.product.brand.name || 'Belirtilmemiş',
-          Kategori: jsonObject.product.category.name || 'Belirtilmemiş',
-          KategoriHiyerarsi: jsonObject.product.category.hierarchy || 'Belirtilmemiş',
-          saticiAdi: jsonObject.product.merchantListing.merchant.name || 'Belirtilmemiş',
-          saticiId: jsonObject.product.merchantListing.merchant.id || 'Belirtilmemiş',
-          saticiSehri: jsonObject.product.merchantListing.merchant.cityName || 'Belirtilmemiş',
+          isim: jsonObject.product?.name || 'Belirtilmemiş',
+          productId: jsonObject.product?.id || 'Belirtilmemiş',
+          marka: jsonObject.product?.brand?.name || 'Belirtilmemiş',
+          Kategori: jsonObject.product?.category?.name || 'Belirtilmemiş',
+          KategoriHiyerarsi: jsonObject.product?.category?.hierarchy || 'Belirtilmemiş',
+          saticiAdi: jsonObject.product?.merchantListing?.merchant?.name || 'Belirtilmemiş',
+          saticiId: jsonObject.product?.merchantListing?.merchant?.id || 'Belirtilmemiş',
+          saticiSehri: jsonObject.product?.merchantListing?.merchant?.cityName || 'Belirtilmemiş',
           saticiEmail:
-            jsonObject.product.merchantListing.merchant.registeredEmailAddress || 'Belirtilmemiş',
-          code: jsonObject.product.productCode || 'Belirtilmemiş',
+            jsonObject.product?.merchantListing?.merchant?.registeredEmailAddress ||
+            'Belirtilmemiş',
+          code: jsonObject.product?.productCode || 'Belirtilmemiş',
           indirimliFiyati:
-            jsonObject.product.merchantListing.winnerVariant.price.discountedPrice.value ??
+            jsonObject.product?.merchantListing?.winnerVariant?.price?.discountedPrice?.value ??
             'Belirtilmemiş',
           SatisFiyati:
-            jsonObject.product.merchantListing.winnerVariant.price.sellingPrice.value ??
+            jsonObject.product?.merchantListing?.winnerVariant?.price?.sellingPrice?.value ??
             'Belirtilmemiş',
           OrjinalFiyati:
-            jsonObject.product.merchantListing.winnerVariant.price.originalPrice.value ??
+            jsonObject.product?.merchantListing?.winnerVariant?.price?.originalPrice?.value ??
             'Belirtilmemiş',
           KuponluFiyatı:
-            jsonObject.product.merchantListing.winnerVariant.price.couponApplicablePrice.value ??
-            'Belirtilmemiş',
-          // SepetSayısı: jsonObject.product.socialProof.basketCount || 'Belirtilmemiş',
-          // GoruntulenmeSayısı: jsonObject.product.socialProof.pageViewCount || 'Belirtilmemiş',
-          // favoriSayısı: jsonObject.product.socialProof.favoriteCount || 'Belirtilmemiş',
-          vergi: jsonObject.product.tax ?? 'Belirtilmemiş',
-          ortalamaDegerlendirme: jsonObject.product.ratingScore.averageRating ?? 'Belirtilmemiş',
-          toplamDegerlendirmeSayısı: jsonObject.product.ratingScore.totalCount ?? 'Belirtilmemiş',
-          toplamYorumSayısı: jsonObject.product.ratingScore.commentCount ?? 'Belirtilmemiş',
+            jsonObject.product?.merchantListing?.winnerVariant?.price?.couponApplicablePrice
+              ?.value ?? 'Belirtilmemiş',
+          vergi: jsonObject.product?.tax ?? 'Belirtilmemiş',
+          ortalamaDegerlendirme: jsonObject.product?.ratingScore?.averageRating ?? 'Belirtilmemiş',
+          toplamDegerlendirmeSayısı: jsonObject.product?.ratingScore?.totalCount ?? 'Belirtilmemiş',
+          toplamYorumSayısı: jsonObject.product?.ratingScore?.commentCount ?? 'Belirtilmemiş',
           bedavaKargo:
-            typeof jsonObject.product.merchantListing.winnerVariant.freeCargo !== 'undefined'
-              ? jsonObject.product.merchantListing.winnerVariant.freeCargo
+            typeof jsonObject.product?.merchantListing?.winnerVariant?.freeCargo !== 'undefined'
+              ? jsonObject.product?.merchantListing?.winnerVariant?.freeCargo
                 ? 'bedava'
                 : 'bedava değil'
               : 'belirtilmemiş',
           attributes,
-          açıklama: descDataJson.descriptions
-            .filter((description) => description.priority === 0) // Filter for priority 0
-            .map((description) => description.text)
+          açıklama: (descDataJson?.descriptions || [])
+            .filter((description: any) => description?.priority === 0)
+            .map((description: any) => description?.text)
             .join(' '),
-          images: jsonObject.product.images,
-          sizes: jsonObject.product.variants.map((variant) => ({
-            itemNumber: variant.itemNumber,
-            beden: variant.value,
-            barcode: variant.barcode || jsonObject.product.variants[0].barcode || '',
-            inStock: variant.inStock ? 'Stokta var' : 'Stokta yok'
+          images: jsonObject.product?.images || [],
+          sizes: (jsonObject.product?.variants || []).map((variant: any) => ({
+            itemNumber: variant?.itemNumber,
+            beden: variant?.value,
+            barcode: variant?.barcode || jsonObject.product?.variants?.[0]?.barcode || '',
+            inStock: variant?.inStock ? 'Stokta var' : 'Stokta yok'
           }))
         }
       }
 
-      // if (false) {
-      //   const yorumlar = [] as any // Initialize an empty array to store all comments
-      //   let commentUrl = ''
-      //   for (let i = 1; i <= Math.ceil(commentNumber / 50); i++) {
-      //     if (dictionary.details.toplamYorumSayısı < 50) {
-      //       commentUrl = `https://apigw.trendyol.com/discovery-web-websfxsocialreviewrating-santral/product-reviews-detailed?sellerId=${dictionary.details.saticiId}&contentId=${dictionary.details.productId}&pageSize=50&channelId=1`
-      //     } else {
-      //       commentUrl = `https://apigw.trendyol.com/discovery-web-websfxsocialreviewrating-santral/product-reviews-detailed?sellerId=${dictionary.details.saticiId}&contentId=${dictionary.details.productId}&pageSize=50&channelId=1&page=${i}`
-      //     }
-
-      //     const response = await axios.get(commentUrl)
-      //     const dataComment = response.data
-      //     const jsonObjectComment = dataComment.result.productReviews.content
-
-      //     // Push the mapped comments into the yorumlar array
-      //     yorumlar.push(
-      //       ...jsonObjectComment.map((review) => ({
-      //         yorum: review.comment,
-      //         puan: review.rate,
-      //         tarih: review.lastModifiedDate,
-      //         isElite: review.isElite,
-      //         isInfluencer: review.isInfluencer,
-      //         reviewLikeCount: review.reviewLikeCount
-      //       }))
-      //     )
-      //     if (jsonObjectComment.length < 50) {
-      //       break
-      //     }
-      //   }
-
-      //   // Assign the complete array to dictionary.details.yorumlar after the loop
-      //   dictionary.details.yorumlar = yorumlar
-      // }
-
       return dictionary
     } else {
-      console.log("No 'allVariants' found in the script.")
+      console.log(url)
       return {}
     }
   } catch (error) {
@@ -204,7 +176,7 @@ export const getData = async (url: string, onProgress?: (progress: string) => vo
         } //https://apigw.trendyol.com/discovery-web-searchgw-service/v2/api/infinite-scroll/erkek-t-shirt-x-g2-c73?pi=1
       }
 
-      if (products.length < 24 || links.length >= productNumber) {
+      if (products.length === 0 || links.length >= productNumber) {
         break
       }
     }
@@ -220,8 +192,6 @@ export const getData = async (url: string, onProgress?: (progress: string) => vo
     return chunks
   }
 
-  console.log('Product Groups:', productGroups)
-
   if (variant) {
     const uniqueProductGroups = Array.from(new Set(productGroups))
     const productGroupsChunks = chunkArray(uniqueProductGroups, 24)
@@ -231,7 +201,6 @@ export const getData = async (url: string, onProgress?: (progress: string) => vo
         const queryParams = group.map((id) => `productGroupIds=${id}`).join('%')
         const url = `https://apigw.trendyol.com/discovery-sfint-search-service/api/search/color-variants?${queryParams}&channelId=1&storefrontId=1&culture=tr-TR`
 
-        //https://apigw.trendyol.com/discovery-sfint-search-service/api/search/color-variants?productGroupIds=623651327%2C643901049%2C234024605%2C571244531%2C90397027%2C704499519%2C727216440%2C107251170%2C745205428%2C256578452%2C228007942%2C623651327%2C691062543%2C645978844%2C824206919%2C3965344%2C692422845%2C681017431%2C112962834%2C616607%2C851800016%2C577118743%2C691063955%2C839513341&channelId=1&storefrontId=1&culture=tr-TR
         try {
           const response = await axios.get(url, {
             headers: {
@@ -261,32 +230,79 @@ export const getData = async (url: string, onProgress?: (progress: string) => vo
   const uniqueLinks = Array.from(new Set(links))
   let counter = 1
   const leng = uniqueLinks.length
+  let consecutiveFailures = 0
+  const maxFailures = 15
+
   // Fetch script content for all products
   for (const link of uniqueLinks) {
     const result = await fetchScriptContent(link)
     if (result.url && result.url.trim()) {
       allData.push(result)
+      consecutiveFailures = 0
+    } else {
+      consecutiveFailures++
+      if (consecutiveFailures >= maxFailures) {
+        console.warn(`Üst üste ${maxFailures} üründen veri alınamadı. İşlem durduruluyor.`)
+        if (allData.length === 0) {
+          throw new Error(
+            `Üst üste ${maxFailures} üründen veri alınamadı. Trendyol sayfa yapısı değişmiş veya IP adresiniz engellenmiş olabilir.`
+          )
+        } else {
+          break
+        }
+      }
     }
+
     await new Promise((resolve) => setTimeout(resolve, 100)) // 300 ms bekleme
     const progress = ((counter++ / leng) * 100).toFixed(2)
     if (typeof onProgress === 'function') {
       onProgress(`${progress}%`)
     }
   }
+
   if (typeof onProgress === 'function') {
     onProgress('')
   }
+
+  if (allData.length === 0 && uniqueLinks.length > 0) {
+    throw new Error(
+      'Hiçbir üründen veri alınamadı. Trendyol sayfa yapısı değişmiş veya IP adresiniz engellenmiş olabilir.'
+    )
+  }
+
   return allData
 }
 
 export const getData2 = async (urls: string[]) => {
   const allData: any[] = []
+  let consecutiveFailures = 0
+  const maxFailures = 15
+
   for (const link of urls) {
     const result = await fetchScriptContent(link)
     if (result.url && result.url.trim()) {
       allData.push(result)
+      consecutiveFailures = 0
+    } else {
+      consecutiveFailures++
+      if (consecutiveFailures >= maxFailures) {
+        if (allData.length === 0) {
+          throw new Error(
+            `Üst üste ${maxFailures} üründen veri alınamadı. Trendyol sayfa yapısı değişmiş veya IP adresiniz engellenmiş olabilir.`
+          )
+        } else {
+          break
+        }
+      }
     }
     await new Promise((resolve) => setTimeout(resolve, 100))
   }
+
+  if (allData.length === 0 && urls.length > 0) {
+    throw new Error(
+      'Hiçbir üründen veri alınamadı. Trendyol sayfa yapısı değişmiş veya IP adresiniz engellenmiş olabilir.'
+    )
+  }
+
   return allData
 }
