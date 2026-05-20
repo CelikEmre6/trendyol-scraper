@@ -1,5 +1,6 @@
 import { useRef } from 'react'
 import { Content, DraggableTopBar, RootLayout } from './components'
+import { UpdateNotification } from './components/UpdateNotification'
 
 function App(): JSX.Element {
   const contentContainerRef = useRef<HTMLDivElement>(null)
@@ -8,8 +9,9 @@ function App(): JSX.Element {
     contentContainerRef.current?.scrollTo(0, 0)
   }
 
-  return (
+    return (
     <>
+      <UpdateNotification />
       <DraggableTopBar />
       <RootLayout>
         <Content

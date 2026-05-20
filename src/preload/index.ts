@@ -64,7 +64,20 @@ try {
     cleanEmptySearches: () => ipcRenderer.invoke('cleanEmptySearches'),
 
     createExcelFile: (search: Parameters<SaveSearch>[0]) =>
-      ipcRenderer.invoke('createExcelFile', search)
+      ipcRenderer.invoke('createExcelFile', search),
+
+    // Auto-updater
+    onUpdateAvailable: (callback: (info: { version: string; releaseNotes?: string }) => void) => {
+      ipcRenderer.on('update-available', (_, info) => callback(info))
+    },
+    onDownloadProgress: (callback: (progress: { percent: number; transferred: number; total: number; bytesPerSecond: number }) => void) => {
+      ipcRenderer.on('download-progress', (_, progress) => callback(progress))
+    },
+    onUpdateDownloaded: (callback: (info: { version: string }) => void) => {
+      ipcRenderer.on('update-downloaded', (_, info) => callback(info))
+    },
+    startDownloadUpdate: () => ipcRenderer.invoke('start-download-update'),
+    installUpdate: () => ipcRenderer.invoke('install-update')
   })
 } catch (error) {
   console.error('Failed to expose preload functions:', error)

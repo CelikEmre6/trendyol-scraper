@@ -38,6 +38,12 @@ declare global {
       cleanEmptySearches: CleanEmptySearches
       getSearchAttributes: () => string[]
       createExcelFile: SaveSearch
+      // Auto-updater
+      onUpdateAvailable: (callback: (info: { version: string; releaseNotes?: string }) => void) => void
+      onDownloadProgress: (callback: (progress: { percent: number; transferred: number; total: number; bytesPerSecond: number }) => void) => void
+      onUpdateDownloaded: (callback: (info: { version: string }) => void) => void
+      startDownloadUpdate: () => Promise<void>
+      installUpdate: () => Promise<void>
     }
   }
 }

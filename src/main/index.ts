@@ -34,8 +34,9 @@ import {
 import { app, BrowserWindow, ipcMain, shell } from 'electron'
 import { join } from 'path'
 import icon from '../../resources/icon.png?asset'
+import { initAutoUpdater, downloadUpdate, installUpdate } from './updater'
 
-function createWindow(): void {
+function createWindow(): BrowserWindow {
   // Create the browser window.
   const mainWindow = new BrowserWindow({
     width: 1280,
@@ -76,6 +77,8 @@ function createWindow(): void {
   } else {
     mainWindow.loadFile(join(__dirname, '../renderer/index.html'))
   }
+
+  return mainWindow
 }
 
 // This method will be called when Electron has finished
@@ -139,7 +142,21 @@ app.whenReady().then(() => {
     })
   })
 
-  createWindow()
+  const mainWindow = createWindow()
+
+  // Auto-updater başlat (sadece production'da)
+  if (!is.dev) {
+    initAutoUpdater(mainWindow)
+  }
+
+  // Updater IPC handler'ları
+  ipcMain.handle('start-download-update', () => {
+    downloadUpdate()
+  })
+
+  ipcMain.handle('install-update', () => {
+    installUpdate()
+  })
 
   app.on('activate', function () {
     // On macOS it's common to re-create a window in the app when the
