@@ -1,16 +1,10 @@
 import {
-  CreateNote,
-  DeleteNote,
   DeleteSearch,
-  CleanEmptySearches,
-  GetNotes,
   GetSearch,
   GetSettingsJson,
-  ReadNote,
   SaveSearch,
   SearchResults,
-  SetSettingsJson,
-  WriteNote
+  SetSettingsJson
 } from '@shared/types'
 
 declare global {
@@ -22,11 +16,7 @@ declare global {
       saveStockLinks(jsonData: string): unknown
       setStockLinksJson(newStockLinks: string[]): unknown
       locale: string
-      getNotes: GetNotes
-      readNote: ReadNote
-      writeNote: WriteNote
-      createNote: CreateNote
-      deleteNote: DeleteNote
+
       solveCaptcha: () => Promise<void>
       getSearchResults: SearchResults
       getSearchResults2: SearchResults

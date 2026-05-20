@@ -1,11 +1,8 @@
 import {
-  DeleteNote,
   DeleteSearch,
-  ReadNote,
   SaveSearch,
   SearchResults,
-  SetSettingsJson,
-  WriteNote
+  SetSettingsJson
 } from '@shared/types'
 import { contextBridge, ipcRenderer } from 'electron'
 
@@ -29,16 +26,7 @@ try {
   contextBridge.exposeInMainWorld('context', {
     locale: navigator.language,
 
-    getNotes: () => ipcRenderer.invoke('getNotes'),
 
-    readNote: (title: Parameters<ReadNote>[0]) => ipcRenderer.invoke('readNote', title),
-
-    writeNote: (title: Parameters<WriteNote>[0], content: Parameters<WriteNote>[1]) =>
-      ipcRenderer.invoke('writeNote', title, content),
-
-    createNote: () => ipcRenderer.invoke('createNote'),
-
-    deleteNote: (title: Parameters<DeleteNote>[0]) => ipcRenderer.invoke('deleteNote', title),
 
     getSearchResults: (url: Parameters<SearchResults>[0]) =>
       ipcRenderer.invoke('getSearchResults', url),

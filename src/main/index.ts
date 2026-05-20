@@ -1,9 +1,7 @@
 import {
   createExcelFile,
-  createNote,
-  deleteNote,
+  cleanEmptySearches,
   deleteSearch,
-  getNotes,
   getSearch,
   getSearchAttributes,
   getSearchResults,
@@ -11,25 +9,17 @@ import {
   getSettingsJson,
   loadStockLinks,
   loadStockLinksFromExcel,
-  readNote,
   saveSearch,
   saveStockLinks,
-  writeNote,
-  writeSettingsJson,
-  cleanEmptySearches
+  writeSettingsJson
 } from '@/lib'
 import { electronApp, is, optimizer } from '@electron-toolkit/utils'
 import {
-  CreateNote,
-  DeleteNote,
   DeleteSearch,
-  GetNotes,
   GetSearch,
-  ReadNote,
   SaveSearch,
   SearchResults,
-  SetSettingsJson,
-  WriteNote
+  SetSettingsJson
 } from '@shared/types'
 import { app, BrowserWindow, ipcMain, shell } from 'electron'
 import { join } from 'path'
@@ -101,14 +91,7 @@ app.whenReady().then(() => {
   })
 
   // IPC test
-  ipcMain.handle('getNotes', (_, ...args: Parameters<GetNotes>) => getNotes(...args))
-  ipcMain.handle('readNote', (_, ...args: Parameters<ReadNote>) => readNote(...args))
-  ipcMain.handle('writeNote', (_, ...args: Parameters<WriteNote>) => writeNote(...args))
-  ipcMain.handle('createNote', (_, ...args: Parameters<CreateNote>) => createNote(...args))
-  ipcMain.handle('deleteNote', (_, ...args: Parameters<DeleteNote>) => deleteNote(...args))
-  // ipcMain.handle('getSearchResults', (_, ...args: Parameters<SearchResults>) =>
-  //   getSearchResults(...args)
-  // )
+
   ipcMain.handle('getSettingsJson', () => getSettingsJson())
   ipcMain.handle('setSettingsJson', (_, ...args: Parameters<SetSettingsJson>) =>
     writeSettingsJson(...args)
