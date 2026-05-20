@@ -29,14 +29,7 @@ export type Settings = {
   productNumber: number
   variant: boolean
   combineIsim?: boolean
-  telegramSettings?: TelegramSettings
   attributes?: string[]
-}
-export type TelegramSettings = {
-  apiKey: string
-  chatId: string
-  stock: boolean
-  price: boolean
 }
 
 export type MessagePayload = {

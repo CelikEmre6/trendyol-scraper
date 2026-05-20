@@ -35,6 +35,7 @@ import { app, BrowserWindow, ipcMain, shell } from 'electron'
 import { join } from 'path'
 import icon from '../../resources/icon.png?asset'
 import { initAutoUpdater, downloadUpdate, installUpdate } from './updater'
+import { setSearchCancelled } from './cancelState'
 
 function createWindow(): BrowserWindow {
   // Create the browser window.
@@ -85,6 +86,10 @@ function createWindow(): BrowserWindow {
 // initialization and is ready to create browser windows.
 // Some APIs can only be used after this event occurs.
 app.whenReady().then(() => {
+  ipcMain.handle('cancelSearch', () => {
+    setSearchCancelled(true)
+  })
+
   // Set app user model id for windows
   electronApp.setAppUserModelId('com.electron')
 
@@ -126,6 +131,7 @@ app.whenReady().then(() => {
   ipcMain.handle('loadStockLinks', () => loadStockLinks())
 
   ipcMain.handle('getSearchResults', async (event, ...args: Parameters<SearchResults>) => {
+    setSearchCancelled(false)
     return new Promise((resolve, reject) => {
       getSearchResults(...args, (progress) => {
         event.sender.send('progress-update', progress) // İlerleme yüzdesini frontend'e gönderiyoruz
@@ -135,6 +141,7 @@ app.whenReady().then(() => {
     })
   })
   ipcMain.handle('getSearchResults2', async (_, urls) => {
+    setSearchCancelled(false)
     return new Promise((resolve, reject) => {
       getSearchResults2(urls)
         .then((data) => resolve(data))

@@ -32,7 +32,6 @@
     "exceljs": "^4.4.0",
     "fs-extra": "^11.2.0",
     "jotai": "^2.9.3",
-    "node-telegram-bot-api": "^0.66.0",
     "react-loader-spinner": "^6.1.6",
     "uuid": "^10.0.0"
   },

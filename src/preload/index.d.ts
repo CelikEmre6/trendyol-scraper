@@ -44,6 +44,8 @@ declare global {
       onUpdateDownloaded: (callback: (info: { version: string }) => void) => void
       startDownloadUpdate: () => Promise<void>
       installUpdate: () => Promise<void>
+      onSearchProgress: (callback: (progress: any) => void) => () => void
+      cancelSearch: () => Promise<void>
     }
   }
 }

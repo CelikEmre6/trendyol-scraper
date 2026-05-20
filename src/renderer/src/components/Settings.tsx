@@ -1,28 +1,8 @@
 import { useSettings } from '@renderer/hooks/useSettings'
-import { TelegramSettings } from '@shared/models'
-import { Button, Checkbox, Input, Modal, Slider } from 'antd'
-import { useState } from 'react'
+import { Checkbox, Slider } from 'antd'
+
 export const Settings = () => {
   const { settings, handleUpdateSettings } = useSettings()
-  const [telegramValues, setTelegramValues] = useState<Partial<TelegramSettings> | null>({
-    apiKey: settings?.telegramSettings?.apiKey || '',
-    chatId: settings?.telegramSettings?.chatId || '',
-    stock: settings?.telegramSettings?.stock || false,
-    price: settings?.telegramSettings?.price || false
-  })
-
-  const [telegramVisible, setTelegramVisible] = useState(false)
-  const handleSaveTelegramSettings = async () => {
-    handleUpdateSettings({
-      ...settings!,
-      telegramSettings: {
-        apiKey: telegramValues?.apiKey || '',
-        chatId: telegramValues?.chatId || '',
-        stock: telegramValues?.stock || false,
-        price: telegramValues?.price || false
-      }
-    })
-  }
 
   return (
     <div className="flex flex-col space-y-3">
@@ -81,52 +61,6 @@ export const Settings = () => {
           >
             Ürün İsmi + Özellikler Birleştirilsin mi ? 
           </Checkbox>
-        </div>
-
-        <div className="flex flex-col space-y-1">
-          <Button type="primary" onClick={() => setTelegramVisible(true)}>
-            Telegram API Ayarları
-          </Button>
-          <Modal
-            title="Telegram API Ayarları"
-            open={telegramVisible}
-            onOk={() => {
-              handleSaveTelegramSettings()
-              setTelegramVisible(false)
-            }}
-            onCancel={() => {
-              setTelegramVisible(false)
-            }}
-          >
-            <div className="flex flex-col space-y-3">
-              <Input
-                placeholder="Telegram API Key"
-                value={telegramValues?.apiKey}
-                onChange={(e) => {
-                  setTelegramValues({ ...telegramValues, apiKey: e.target.value })
-                }}
-              />
-              <Input
-                placeholder="Telegram Chat ID"
-                value={telegramValues?.chatId}
-                onChange={(e) => {
-                  setTelegramValues({ ...telegramValues, chatId: e.target.value })
-                }}
-              />
-              <Checkbox
-                checked={telegramValues?.stock}
-                onChange={(e) => setTelegramValues({ ...telegramValues, stock: e.target.checked })}
-              >
-                Stock
-              </Checkbox>
-              <Checkbox
-                checked={telegramValues?.price}
-                onChange={(e) => setTelegramValues({ ...telegramValues, price: e.target.checked })}
-              >
-                Price
-              </Checkbox>
-            </div>
-          </Modal>
         </div>
       </div>
     </div>

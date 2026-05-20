@@ -23,7 +23,6 @@ import { isEmpty } from 'lodash'
 import os, { homedir } from 'os'
 import path from 'path'
 import welcomeNoteFile from '../../../resources/welcomeNote.md?asset'
-import { TelegramService } from './Telegram'
 
 export const getRootDir = () => {
   return `${homedir()}/${appDirectoryName}`
@@ -137,7 +136,7 @@ export const deleteNote: DeleteNote = async (filename) => {
   return true
 }
 
-export const getSearchResults = async (url: string, onProgress?: (progress: string) => void) => {
+export const getSearchResults = async (url: string, onProgress?: (progress: any) => void) => {
   let data = [] as any
   const settings = await getSettingsJson()
   if (url.includes('trendyol.com')) {
@@ -176,66 +175,7 @@ export const getSearchResults2 = async (urls: string) => {
 
   return data
 }
-// async function compareStokSearches(lastSearch: any[], data: any[]) {
-//   const settings = await getSettingsJson()
-//   if (
-//     !settings.telegramSettings?.apiKey ||
-//     !settings.telegramSettings?.chatId ||
-//     settings.telegramSettings?.apiKey === '' ||
-//     settings.telegramSettings?.chatId === ''
-//   ) {
-//     return
-//   }
 
-//   const telegramSettings: TelegramSettings = {
-//     apiKey: settings.telegramSettings.apiKey,
-//     chatId: settings.telegramSettings.chatId,
-//     stock: false,
-//     price: false
-//   }
-//   const telegramService = new TelegramService(telegramSettings.apiKey, telegramSettings.chatId)
-//   if ((await telegramService.verifyCredentials()) === false) {
-//     return
-//   }
-
-//   if (!telegramSettings.price && !telegramSettings.stock) {
-//     return
-//   }
-//   lastSearch.forEach((lastItem) => {
-//     const matchingDataItem = data.find((item) => item.url === lastItem.url)
-//     if (telegramSettings.price) {
-//       if (
-//         matchingDataItem &&
-//         lastItem.details.indirimliFiyati !== matchingDataItem.details.indirimliFiyati
-//       ) {
-//         const message =
-//           `Fiyat değişikliği: ${lastItem.url}\n` +
-//           `Son Arama Fiyatı: ${lastItem.details.indirimliFiyati}\n` +
-//           `Yeni Arama Fiyatı: ${matchingDataItem.details.indirimliFiyati}`
-//         telegramService.sendMessage(message)
-//       }
-//     }
-//     if (telegramSettings.stock) {
-//       if (matchingDataItem && lastItem.details.sizes) {
-//         lastItem.details.sizes.forEach((lastSize) => {
-//           const matchingSize = matchingDataItem.details.sizes.find(
-//             (size) => size.itemNumber === lastSize.itemNumber
-//           )
-
-//           if (matchingSize && lastSize.inStock !== matchingSize.inStock) {
-//             let stockMessage = `Stok Değisikliği: ${matchingDataItem.url}\n`
-//             if (lastSize.beden && lastSize.beden.trim() !== '') {
-//               stockMessage += `Bedeni: ${lastSize.beden}\n`
-//             }
-//             stockMessage +=
-//               `Son Aramadaki Beden: ${lastSize.inStock}\n` + `Yeni Arama: ${matchingSize.inStock}`
-//             telegramService.sendMessage(stockMessage)
-//           }
-//         })
-//       }
-//     }
-//   })
-// }
 function getMacAddress() {
   const networkInterfaces = os.networkInterfaces()
   for (const interfaceName in networkInterfaces) {
@@ -287,15 +227,6 @@ export const getSettingsJson: GetSettingsJson = async () => {
 }
 
 export const writeSettingsJson: SetSettingsJson = async (settings) => {
-  if (settings.telegramSettings?.apiKey && settings.telegramSettings?.chatId !== '') {
-    const telegramService = new TelegramService(
-      settings.telegramSettings.apiKey || '',
-      settings.telegramSettings.chatId || ''
-    )
-    if ((await telegramService.verifyCredentials()) === false) {
-      throw new Error('Telegram bot or chatId is not configured.')
-    }
-  }
   await writeFile(`${getRootDir()}/settings.json`, JSON.stringify(settings, null, 2), {
     encoding: fileEncoding
   })

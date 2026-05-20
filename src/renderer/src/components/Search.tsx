@@ -8,6 +8,7 @@ export const Search = () => {
   const [url, setUrl] = useState('')
   const [selectedUrl, setSelectedUrl] = useState(null)
   const [progress, setProgress] = useState(0) // Yüzdeyi tutacak state
+  const [progressStats, setProgressStats] = useState({ percent: 0, total: 0, success: 0, failed: 0 })
   const [searchDescription, setSearchDescription] = useState('')
   const [loading, setLoading] = useState(false)
   const setSearchResults = useSetAtom(saveSearchResultsAtom)
@@ -22,16 +23,29 @@ export const Search = () => {
   }
 
   useEffect(() => {
-    const interval = setInterval(() => {
-      const progressBar = document.getElementById('progressBar')
-      if (progressBar) {
-        const text = progressBar.textContent || '0%'
-        const value = parseFloat(text.replace('%', ''))
-        setProgress(value)
+    const cleanup = window.context.onSearchProgress((data) => {
+      if (data && typeof data === 'object') {
+        if (data.percent !== undefined) {
+          const percentVal = parseFloat(data.percent)
+          setProgressStats({
+            percent: percentVal,
+            total: data.total || 0,
+            success: data.success || 0,
+            failed: data.failed || 0
+          })
+          setProgress(percentVal)
+        } else if (data.message) {
+          // You can handle string messages here if you want to show them
+        }
+      } else {
+        const val = parseFloat(String(data).replace('%', ''))
+        setProgress(val)
       }
-    }, 500)
+    })
 
-    return () => clearInterval(interval)
+    return () => {
+      if (cleanup) cleanup()
+    }
   }, [])
 
   useEffect(() => {
@@ -165,6 +179,8 @@ export const Search = () => {
           className="w-96"
           onClick={async () => {
             setLoading(true)
+            setProgress(0)
+            setProgressStats({ percent: 0, total: 0, success: 0, failed: 0 })
             try {
               // Progress sıfırken loading mesajını sürekli göster
               message.loading('Ürün Linkleri Toplanıyor', 3) // Süresiz bir loading mesajı
@@ -205,12 +221,38 @@ export const Search = () => {
         ></div>
       </div>
       {loading && (
-        <div style={{ marginTop: '10px' }}>
+        <div style={{ marginTop: '15px', display: 'flex', alignItems: 'center', gap: '20px' }}>
           <Progress
             type="circle"
             percent={progress}
             format={(percent) => `${percent?.toFixed(2)}%`}
+            size={80}
           />
+          <div style={{ display: 'flex', flexDirection: 'row', gap: '15px', textAlign: 'center', alignItems: 'center' }}>
+            <div style={{ background: 'rgba(255,255,255,0.05)', padding: '10px 15px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.1)', minWidth: '90px' }}>
+              <span style={{ color: 'rgba(255,255,255,0.5)', fontSize: '11px', display: 'block', marginBottom: '4px' }}>Toplam Ürün</span>
+              <strong style={{ color: '#fff', fontSize: '16px' }}>{progressStats.total}</strong>
+            </div>
+            <div style={{ background: 'rgba(76, 175, 80, 0.1)', padding: '10px 15px', borderRadius: '8px', border: '1px solid rgba(76, 175, 80, 0.2)', minWidth: '90px' }}>
+              <span style={{ color: 'rgba(255,255,255,0.5)', fontSize: '11px', display: 'block', marginBottom: '4px' }}>Başarılı</span>
+              <strong style={{ color: '#4caf50', fontSize: '16px' }}>{progressStats.success}</strong>
+            </div>
+            <div style={{ background: 'rgba(244, 67, 54, 0.1)', padding: '10px 15px', borderRadius: '8px', border: '1px solid rgba(244, 67, 54, 0.2)', minWidth: '90px' }}>
+              <span style={{ color: 'rgba(255,255,255,0.5)', fontSize: '11px', display: 'block', marginBottom: '4px' }}>Başarısız</span>
+              <strong style={{ color: '#f44336', fontSize: '16px' }}>{progressStats.failed}</strong>
+            </div>
+            
+            <Button
+              danger
+              type="primary"
+              onClick={() => {
+                window.context.cancelSearch()
+              }}
+              style={{ marginLeft: '10px', height: '40px', borderRadius: '8px' }}
+            >
+              İptal Et
+            </Button>
+          </div>
         </div>
       )}
 

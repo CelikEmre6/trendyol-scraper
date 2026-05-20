@@ -1,5 +1,6 @@
 /* eslint-disable no-unsafe-finally */
 import { getSettingsJson } from '@/lib'
+import { isSearchCancelled } from '../../cancelState'
 import axios from 'axios'
 import * as cheerio from 'cheerio'
 /* eslint-disable @typescript-eslint/no-explicit-any */
@@ -112,7 +113,7 @@ async function fetchScriptContent(url: string) {
   }
 }
 
-export const getData = async (url: string, onProgress?: (progress: string) => void) => {
+export const getData = async (url: string, onProgress?: (progress: any) => void) => {
   const allData: any[] = []
   const links: string[] = []
   const productGroups: string[] = []
@@ -135,7 +136,7 @@ export const getData = async (url: string, onProgress?: (progress: string) => vo
     return allData
   }
   if (typeof onProgress === 'function') {
-    onProgress('Ürün Linkleri Toplanıyor...')
+    onProgress({ message: 'Ürün Linkleri Toplanıyor...' })
   }
   const settings = await getSettingsJson()
   const productNumber = settings.productNumber
@@ -143,6 +144,7 @@ export const getData = async (url: string, onProgress?: (progress: string) => vo
   const variant = settings.variant
   try {
     for (let page = 1; page <= (trial ? 1 : 250); page++) {
+      if (isSearchCancelled) break
       // const response = await axios.get(
       //   `https://public.trendyol.com/discovery-web-searchgw-service/v2/api/infinite-scroll/erkek-kazak-x-g2-c1092?pi=${page}`
       // )
@@ -198,6 +200,7 @@ export const getData = async (url: string, onProgress?: (progress: string) => vo
 
     await Promise.all(
       productGroupsChunks.map(async (group) => {
+        if (isSearchCancelled) return
         const queryParams = group.map((id) => `productGroupIds=${id}`).join('%')
         const url = `https://apigw.trendyol.com/discovery-sfint-search-service/api/search/color-variants?${queryParams}&channelId=1&storefrontId=1&culture=tr-TR`
 
@@ -235,6 +238,10 @@ export const getData = async (url: string, onProgress?: (progress: string) => vo
 
   // Fetch script content for all products
   for (const link of uniqueLinks) {
+    if (isSearchCancelled) {
+      console.log('Arama kullanıcı tarafından iptal edildi.')
+      break
+    }
     const result = await fetchScriptContent(link)
     if (result.url && result.url.trim()) {
       allData.push(result)
@@ -254,14 +261,19 @@ export const getData = async (url: string, onProgress?: (progress: string) => vo
     }
 
     await new Promise((resolve) => setTimeout(resolve, 100)) // 300 ms bekleme
-    const progress = ((counter++ / leng) * 100).toFixed(2)
+    const percentVal = ((counter++ / leng) * 100).toFixed(2)
     if (typeof onProgress === 'function') {
-      onProgress(`${progress}%`)
+      onProgress({
+        percent: percentVal,
+        total: leng,
+        success: allData.length,
+        failed: (counter - 1) - allData.length
+      })
     }
   }
 
   if (typeof onProgress === 'function') {
-    onProgress('')
+    onProgress({ message: '' })
   }
 
   if (allData.length === 0 && uniqueLinks.length > 0) {
@@ -279,6 +291,7 @@ export const getData2 = async (urls: string[]) => {
   const maxFailures = 15
 
   for (const link of urls) {
+    if (isSearchCancelled) break
     const result = await fetchScriptContent(link)
     if (result.url && result.url.trim()) {
       allData.push(result)

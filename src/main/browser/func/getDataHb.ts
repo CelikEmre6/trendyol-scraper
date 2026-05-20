@@ -1,6 +1,7 @@
 /* eslint-disable prettier/prettier */
 /* eslint-disable no-unsafe-finally */
 import { getSettingsJson } from '@/lib';
+import { isSearchCancelled } from '../../cancelState';
 import { CheerioCrawler, Configuration } from 'crawlee';
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
@@ -12,11 +13,12 @@ const results = [] as any[];
 let completed = 0;
 
 // Create async function to initialize crawlers
-async function initializeCrawlers(onProgress?: (progress: string) => void) {
+async function initializeCrawlers(onProgress?: (progress: any) => void) {
 
     const summaryCrawler = new CheerioCrawler({
         statisticsOptions: {},
         async requestHandler({ $, request, log }) {
+            if (isSearchCancelled) return;
             log.info(`Scraping URL: ${request.url}`);
             let ilanCount = 0;
             let items = [];
@@ -66,6 +68,7 @@ async function initializeCrawlers(onProgress?: (progress: string) => void) {
         sameDomainDelaySecs: 2,
         statisticsOptions: {},
         async requestHandler({ $, log, request }) {
+            if (isSearchCancelled) return;
             log.info(`Scraping URL: ${request.url}`);
             const linkElements = $('[class^="productListContent"] li article a[href]').toArray()
                 .map(el => $(el).attr('href'))
@@ -82,6 +85,7 @@ async function initializeCrawlers(onProgress?: (progress: string) => void) {
         sameDomainDelaySecs: 2,
         statisticsOptions: {},
         async requestHandler({ $, request, log }) {
+            if (isSearchCancelled) return;
             try {
                 log.info(`Scraping detail URL: ${request.url}`);
 
@@ -191,9 +195,14 @@ async function initializeCrawlers(onProgress?: (progress: string) => void) {
                 throw error;
             } finally {
                 completed++;
-                const progress = detailLinks.length > 0 ? ((completed / detailLinks.length) * 100).toFixed(2) : '0.00';
+                const percentVal = detailLinks.length > 0 ? ((completed / detailLinks.length) * 100).toFixed(2) : '0.00';
                 if (typeof onProgress === 'function') {
-                    onProgress(`${progress}%`);
+                    onProgress({
+                        percent: percentVal,
+                        total: detailLinks.length,
+                        success: results.length,
+                        failed: completed - results.length
+                    });
                 }
             }
         }
@@ -204,7 +213,7 @@ async function initializeCrawlers(onProgress?: (progress: string) => void) {
 
 // Rest of your functions remain the same...
 
-export const getDataHB = async (url: string, onProgress?: (progress: string) => void) => {
+export const getDataHB = async (url: string, onProgress?: (progress: any) => void) => {
     results.length = 0;
     urls.length = 0;
     detailLinks.length = 0;
@@ -231,7 +240,7 @@ export const getDataHB = async (url: string, onProgress?: (progress: string) => 
     }
 
     if (typeof onProgress === 'function') {
-        onProgress('Ürün Linkleri Toplanıyor...');
+        onProgress({ message: 'Ürün Linkleri Toplanıyor...' });
     }
 
     await summaryCrawler.run([url]);

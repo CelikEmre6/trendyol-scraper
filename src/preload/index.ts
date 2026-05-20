@@ -15,9 +15,14 @@ if (!process.contextIsolated) {
 
 try {
   ipcRenderer.on('progress-update', (_, progress) => {
+    // Keep backward compatibility for the hidden div (just in case)
     const progressBar = document.getElementById('progressBar')
     if (progressBar) {
-      progressBar.innerText = `${progress}`
+      if (typeof progress === 'object') {
+        progressBar.innerText = progress.percent ? `${progress.percent}%` : progress.message || ''
+      } else {
+        progressBar.innerText = `${progress}`
+      }
     }
   })
 
@@ -77,7 +82,16 @@ try {
       ipcRenderer.on('update-downloaded', (_, info) => callback(info))
     },
     startDownloadUpdate: () => ipcRenderer.invoke('start-download-update'),
-    installUpdate: () => ipcRenderer.invoke('install-update')
+    installUpdate: () => ipcRenderer.invoke('install-update'),
+    
+    // Search progress
+    onSearchProgress: (callback: (progress: any) => void) => {
+      // Create a specific listener instance to avoid duplicate listeners when re-rendered
+      const listener = (_: any, progress: any) => callback(progress)
+      ipcRenderer.on('progress-update', listener)
+      return () => { ipcRenderer.removeListener('progress-update', listener) } // return cleanup fn
+    },
+    cancelSearch: () => ipcRenderer.invoke('cancelSearch')
   })
 } catch (error) {
   console.error('Failed to expose preload functions:', error)
