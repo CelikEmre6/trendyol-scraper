@@ -1,21 +1,9 @@
+import { updateAvailableAtom, updateStateAtom, downloadProgressAtom } from '@/store'
 import { Modal, Progress, Button, Typography, Space } from 'antd'
+import { useAtom } from 'jotai'
 import { useEffect, useState } from 'react'
 
 const { Text, Title } = Typography
-
-type UpdateState = 'idle' | 'available' | 'downloading' | 'downloaded'
-
-interface UpdateInfo {
-  version: string
-  releaseNotes?: string
-}
-
-interface DownloadProgress {
-  percent: number
-  transferred: number
-  total: number
-  bytesPerSecond: number
-}
 
 function formatBytes(bytes: number): string {
   if (bytes === 0) return '0 B'
@@ -26,15 +14,16 @@ function formatBytes(bytes: number): string {
 }
 
 export function UpdateNotification(): JSX.Element | null {
-  const [state, setState] = useState<UpdateState>('idle')
-  const [updateInfo, setUpdateInfo] = useState<UpdateInfo | null>(null)
-  const [progress, setProgress] = useState<DownloadProgress | null>(null)
-  const [dismissed, setDismissed] = useState(false)
+  const [state, setState] = useAtom(updateStateAtom)
+  const [updateInfo, setUpdateInfo] = useAtom(updateAvailableAtom)
+  const [progress, setProgress] = useAtom(downloadProgressAtom)
+  const [modalDismissed, setModalDismissed] = useState(false)
 
   useEffect(() => {
     window.context.onUpdateAvailable((info) => {
       setUpdateInfo(info)
       setState('available')
+      setModalDismissed(false)
     })
 
     window.context.onDownloadProgress((prog) => {
@@ -59,16 +48,26 @@ export function UpdateNotification(): JSX.Element | null {
   }
 
   const handleDismiss = (): void => {
-    setDismissed(true)
+    setModalDismissed(true)
+    // state'i 'available' olarak bırakıyoruz ki Search'deki badge görünsün
   }
 
-  if (state === 'idle' || dismissed) return null
+  const handleDismissDownloaded = (): void => {
+    setModalDismissed(true)
+  }
+
+  // Modal gösterilme koşulları
+  const showAvailableModal = state === 'available' && !modalDismissed
+  const showDownloadingModal = state === 'downloading'
+  const showDownloadedModal = state === 'downloaded' && !modalDismissed
+
+  if (state === 'idle') return null
 
   return (
     <>
       {/* Güncelleme mevcut */}
       <Modal
-        open={state === 'available'}
+        open={showAvailableModal}
         title={null}
         footer={null}
         closable={false}
@@ -127,7 +126,7 @@ export function UpdateNotification(): JSX.Element | null {
 
       {/* İndirme ilerlemesi */}
       <Modal
-        open={state === 'downloading'}
+        open={showDownloadingModal}
         title={null}
         footer={null}
         closable={false}
@@ -166,7 +165,7 @@ export function UpdateNotification(): JSX.Element | null {
 
       {/* İndirme tamamlandı */}
       <Modal
-        open={state === 'downloaded'}
+        open={showDownloadedModal}
         title={null}
         footer={null}
         closable={false}
@@ -208,7 +207,7 @@ export function UpdateNotification(): JSX.Element | null {
             </Button>
             <Button
               size="large"
-              onClick={handleDismiss}
+              onClick={handleDismissDownloaded}
               style={{
                 background: 'rgba(255,255,255,0.1)',
                 border: '1px solid rgba(255,255,255,0.2)',

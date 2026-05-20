@@ -6,4 +6,4 @@ export const welcomeNoteFilename = 'Welcome.md'
 
 export const licance_api_url = 'https://cccoxpdi5i.execute-api.eu-central-1.amazonaws.com'
 
-export const appVersion = '1.0.3'
+export const appVersion = '1.1.1'
