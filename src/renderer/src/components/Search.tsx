@@ -11,7 +11,20 @@ export const Search = () => {
   const [progressStats, setProgressStats] = useState({ percent: 0, total: 0, success: 0, failed: 0 })
   const [searchDescription, setSearchDescription] = useState('')
   const [loading, setLoading] = useState(false)
+  const [dots, setDots] = useState('')
   const setSearchResults = useSetAtom(saveSearchResultsAtom)
+
+  useEffect(() => {
+    let interval: NodeJS.Timeout
+    if (loading) {
+      interval = setInterval(() => {
+        setDots((prev) => (prev.length >= 3 ? '' : prev + '.'))
+      }, 400)
+    } else {
+      setDots('')
+    }
+    return () => clearInterval(interval)
+  }, [loading])
 
   // Auto-updater global state
   const [updateState] = useAtom(updateStateAtom)
@@ -48,12 +61,7 @@ export const Search = () => {
     }
   }, [])
 
-  useEffect(() => {
-    // Eğer progress > 0 olduğunda loading mesajını kapat
-    if (progress > 0) {
-      message.destroy() // Antd loading mesajını temizler
-    }
-  }, [progress])
+  // Eski message.destroy hook'u kaldırıldı
 
   const refresh = () => {
     setSearchDescription('')
@@ -152,20 +160,13 @@ export const Search = () => {
 
   return (
     <div className="w-full h-full flex flex-col items-center justify-center space-y-3 relative">
-      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', width: '60%' }}>
+      <div className="flex items-center gap-2 w-[60%] max-w-2xl">
         <input
           type="text"
           placeholder="Trendyol / Hepsiburada Linki Giriniz"
           value={url}
           onChange={handleUrlChange}
-          className="w-96 text-blue-500"
-          style={{
-            height: '40px',
-            flex: 1,
-            padding: '10px',
-            borderRadius: '5px',
-            border: '1px solid #ccc'
-          }}
+          className="flex-1 h-14 px-5 text-white bg-white/5 border border-white/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary/50 transition-all duration-300 placeholder-white/30 backdrop-blur-md"
         ></input>
         <Tooltip title="Panodan Yapıştır" placement="top">
           <button
@@ -178,27 +179,30 @@ export const Search = () => {
               }
             }}
             style={{
-              height: '40px',
-              width: '40px',
+              height: '56px',
+              width: '56px',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              borderRadius: '5px',
-              border: '1px solid #ccc',
-              background: 'rgba(255,255,255,0.08)',
+              borderRadius: '12px',
+              border: '1px solid rgba(255,255,255,0.1)',
+              background: 'rgba(255,255,255,0.05)',
               cursor: 'pointer',
-              fontSize: '18px',
+              fontSize: '24px',
               color: '#aaa',
-              transition: 'background 0.2s, color 0.2s',
-              flexShrink: 0
+              transition: 'all 0.3s ease',
+              flexShrink: 0,
+              backdropFilter: 'blur(10px)'
             }}
             onMouseEnter={(e) => {
               e.currentTarget.style.background = 'rgba(79, 172, 254, 0.2)'
               e.currentTarget.style.color = '#4facfe'
+              e.currentTarget.style.borderColor = 'rgba(79, 172, 254, 0.4)'
             }}
             onMouseLeave={(e) => {
-              e.currentTarget.style.background = 'rgba(255,255,255,0.08)'
+              e.currentTarget.style.background = 'rgba(255,255,255,0.05)'
               e.currentTarget.style.color = '#aaa'
+              e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)'
             }}
           >
             📋
@@ -214,20 +218,16 @@ export const Search = () => {
         placement="bottom"
         color="blue"
       >
-        <Button
-          className="w-96"
+        <button
+          className="w-[60%] max-w-2xl h-14 mt-4 bg-gradient-to-r from-primary to-accent text-white font-bold text-lg rounded-xl shadow-[0_0_20px_rgba(79,172,254,0.3)] hover:shadow-[0_0_30px_rgba(79,172,254,0.6)] transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none"
           onClick={async () => {
             setLoading(true)
             setProgress(0)
             setProgressStats({ percent: 0, total: 0, success: 0, failed: 0 })
             try {
-              // Progress sıfırken loading mesajını sürekli göster
-              message.loading('Ürün Linkleri Toplanıyor', 3) // Süresiz bir loading mesajı
               const data = await window.context.getSearchResults(url!)
               const newSearch = {
-                results: data.map((item) => ({
-                  ...item
-                })),
+                results: data.map((item) => ({ ...item })),
                 date: new Date().getTime(),
                 description: url.includes('trendyol.com/')
                   ? url.slice(url.indexOf('trendyol.com/') + 13)
@@ -244,11 +244,10 @@ export const Search = () => {
               setLoading(false)
             }
           }}
-          type="primary"
           disabled={(!url.includes('trendyol.com') && !url.includes('hepsiburada.com')) || loading}
         >
-          Verileri Al
-        </Button>
+          {loading ? (progress > 0 ? `Ürün Verileri Çekiliyor${dots}` : `Ürün Linkleri Çekiliyor${dots}`) : 'Verileri Al'}
+        </button>
       </Tooltip>
       <div className="width: 100%; background-color: #ddd;">
         <div
@@ -260,37 +259,35 @@ export const Search = () => {
         ></div>
       </div>
       {loading && (
-        <div style={{ marginTop: '15px', display: 'flex', alignItems: 'center', gap: '20px' }}>
+        <div className="mt-8 flex items-center gap-6 p-6 rounded-2xl bg-surface border border-white/10 backdrop-blur-md">
           <Progress
-            type="circle"
+            type="dashboard"
             percent={progress}
-            format={(percent) => `${percent?.toFixed(2)}%`}
-            size={80}
+            format={(percent) => <span className="text-white font-bold">{percent?.toFixed(1)}%</span>}
+            size={100}
+            strokeColor={{ '0%': '#4facfe', '100%': '#00f2fe' }}
+            trailColor="rgba(255,255,255,0.1)"
           />
-          <div style={{ display: 'flex', flexDirection: 'row', gap: '15px', textAlign: 'center', alignItems: 'center' }}>
-            <div style={{ background: 'rgba(255,255,255,0.05)', padding: '10px 15px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.1)', minWidth: '90px' }}>
-              <span style={{ color: 'rgba(255,255,255,0.5)', fontSize: '11px', display: 'block', marginBottom: '4px' }}>Toplam Ürün</span>
-              <strong style={{ color: '#fff', fontSize: '16px' }}>{progressStats.total}</strong>
+          <div className="flex flex-row gap-4 text-center items-center">
+            <div className="bg-white/5 p-4 rounded-xl border border-white/10 min-w-[100px]">
+              <span className="text-white/50 text-xs block mb-1">Toplam</span>
+              <strong className="text-white text-xl">{progressStats.total}</strong>
             </div>
-            <div style={{ background: 'rgba(76, 175, 80, 0.1)', padding: '10px 15px', borderRadius: '8px', border: '1px solid rgba(76, 175, 80, 0.2)', minWidth: '90px' }}>
-              <span style={{ color: 'rgba(255,255,255,0.5)', fontSize: '11px', display: 'block', marginBottom: '4px' }}>Başarılı</span>
-              <strong style={{ color: '#4caf50', fontSize: '16px' }}>{progressStats.success}</strong>
+            <div className="bg-green-500/10 p-4 rounded-xl border border-green-500/20 min-w-[100px]">
+              <span className="text-green-400/70 text-xs block mb-1">Başarılı</span>
+              <strong className="text-green-400 text-xl">{progressStats.success}</strong>
             </div>
-            <div style={{ background: 'rgba(244, 67, 54, 0.1)', padding: '10px 15px', borderRadius: '8px', border: '1px solid rgba(244, 67, 54, 0.2)', minWidth: '90px' }}>
-              <span style={{ color: 'rgba(255,255,255,0.5)', fontSize: '11px', display: 'block', marginBottom: '4px' }}>Başarısız</span>
-              <strong style={{ color: '#f44336', fontSize: '16px' }}>{progressStats.failed}</strong>
+            <div className="bg-red-500/10 p-4 rounded-xl border border-red-500/20 min-w-[100px]">
+              <span className="text-red-400/70 text-xs block mb-1">Başarısız</span>
+              <strong className="text-red-400 text-xl">{progressStats.failed}</strong>
             </div>
             
-            <Button
-              danger
-              type="primary"
-              onClick={() => {
-                window.context.cancelSearch()
-              }}
-              style={{ marginLeft: '10px', height: '40px', borderRadius: '8px' }}
+            <button
+              onClick={() => window.context.cancelSearch()}
+              className="ml-4 h-12 px-6 rounded-xl border border-red-500/50 text-red-400 hover:bg-red-500/10 transition-colors font-medium"
             >
               İptal Et
-            </Button>
+            </button>
           </div>
         </div>
       )}

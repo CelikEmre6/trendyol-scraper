@@ -12,8 +12,16 @@ import { Settings } from './Settings'
 import { StockLinksComponent } from './StockLinks'
 export const RootLayout = ({ children, className, ...props }: ComponentProps<'main'>) => {
   return (
-    <main className={twMerge('flex flex-row h-screen', className)} {...props}>
-      {children}
+    <main className={twMerge('flex flex-row h-screen relative overflow-hidden bg-[#09090b]', className)} {...props}>
+      {/* Animated Background Blobs - Görünürlük artırıldı */}
+      <div className="absolute top-10 left-10 w-96 h-96 bg-[#4facfe] rounded-full blur-3xl opacity-50 animate-blob pointer-events-none"></div>
+      <div className="absolute top-20 right-20 w-96 h-96 bg-[#8b5cf6] rounded-full blur-3xl opacity-50 animate-blob animation-delay-2000 pointer-events-none"></div>
+      <div className="absolute -bottom-10 left-1/3 w-96 h-96 bg-[#00f2fe] rounded-full blur-3xl opacity-50 animate-blob animation-delay-4000 pointer-events-none"></div>
+      
+      {/* Content wrapper with z-index to stay above blobs */}
+      <div className="z-10 flex flex-row w-full h-full">
+        {children}
+      </div>
     </main>
   )
 }
@@ -21,7 +29,7 @@ export const RootLayout = ({ children, className, ...props }: ComponentProps<'ma
 export const Sidebar = ({ className, children, ...props }: ComponentProps<'aside'>) => {
   return (
     <aside
-      className={twMerge('w-[250px] h-full overflow-auto bg-[#1E1E1E] shadow-lg', className)}
+      className={twMerge('w-[250px] h-full overflow-auto bg-[#1E1E1E]/80 backdrop-blur-md shadow-lg', className)}
       {...props}
     >
       {children}
@@ -243,38 +251,53 @@ export const Content = forwardRef<HTMLDivElement, ComponentProps<'div'>>(
       <ConfigProvider
         theme={{
           token: {
-            colorPrimary: '#569CD6', // Windows mavisi
-            colorBgBase: '#2e2e2e', // Dark theme taban rengi
-            colorTextBase: '#FFFFFF', // Beyaz yazı rengi
-            borderRadius: 0, // Hafif köşeli butonlar
-            fontFamily: 'Segoe UI, Arial, sans-serif' // Windows fontu
+            colorPrimary: '#4facfe', // Neon mavi
+            colorBgBase: '#141414', // Şeffaf yerine koyu gri, böylece popuplar okunabilir olur
+            colorBgContainer: 'rgba(20, 20, 20, 0.4)', // Form elemanları şeffaf cam gibi
+            colorBgElevated: '#1f1f1f', // Tooltip, Message ve Modal arka planları kesinlikle koyu
+            colorTextBase: '#FFFFFF',
+            colorTextLightSolid: '#FFFFFF', // Tooltip yazıları her zaman beyaz
+            borderRadius: 12,
+            fontFamily: 'Inter, sans-serif',
+            colorBorder: 'rgba(255,255,255,0.1)',
+            colorBgSpotlight: '#000000', // Tooltip siyah fon
           },
           components: {
             Select: {
-              multipleItemBg: '#2e2e2e',
-              optionActiveBg: '#3e3e3e',
-              optionSelectedBg: '#569CD6'
+              multipleItemBg: 'rgba(255,255,255,0.1)',
+              optionActiveBg: 'rgba(255,255,255,0.05)',
+              optionSelectedBg: 'rgba(79, 172, 254, 0.3)'
             },
             Slider: {
-              handleColor: '#569CD6',
-              handleActiveOutlineColor: '#569CD6'
+              handleColor: '#4facfe',
+              handleActiveOutlineColor: '#4facfe'
+            },
+            Tabs: {
+              itemColor: 'rgba(255,255,255,0.6)',
+              itemSelectedColor: '#4facfe',
+              itemHoverColor: '#00f2fe'
+            },
+            Table: {
+              colorBgContainer: 'transparent',
+              headerBg: 'rgba(255,255,255,0.05)',
+              rowHoverBg: 'rgba(79, 172, 254, 0.1)',
+              borderColor: 'rgba(255,255,255,0.05)'
             }
           }
         }}
       >
-        <div ref={ref} className={twMerge('flex-1 h-full overflow-auto', className)} {...props}>
+        <div ref={ref} className={twMerge('flex-1 h-full overflow-auto z-10', className)} {...props}>
           <Tabs
             onChange={onChange}
-            type="card"
+            type="line"
             items={items}
-            style={{
-              width: '100%'
-            }}
+            style={{ width: '100%' }}
             tabBarStyle={{
-              backgroundColor: '#1e1e1e',
-              color: '#FFFFFF',
-              borderBottom: '1px solid #333',
-              marginBottom: '0px'
+              padding: '0 20px',
+              borderBottom: '1px solid rgba(255,255,255,0.1)',
+              marginBottom: '0px',
+              backdropFilter: 'blur(10px)',
+              background: 'rgba(0,0,0,0.2)'
             }}
           />
         </div>

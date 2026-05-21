@@ -120,28 +120,32 @@ export const History = () => {
   }
 
   return (
-    <div className="w-full h-full overflow-scroll max-w-[80vw] flex flex-col p-3">
-      <div className="flex items-center justify-between space-x-3">
-        <Button type="primary" danger onClick={handleDelete}>
+    <div className="w-full h-full overflow-scroll max-w-[80vw] flex flex-col p-6 z-10">
+      <div className="flex items-center justify-between mb-6 p-4 rounded-2xl bg-surface border border-white/10 backdrop-blur-md shadow-lg">
+        <button 
+          className="h-10 px-6 rounded-lg bg-red-500/10 border border-red-500/30 text-red-400 hover:bg-red-500/20 hover:border-red-500/50 hover:shadow-[0_0_15px_rgba(239,68,68,0.3)] transition-all duration-300 font-medium"
+          onClick={handleDelete}
+        >
           Sil
-        </Button>
-        <div className="flex items-center space-x-3">
-          <Button
+        </button>
+        <div className="flex items-center space-x-4">
+          <button
+            className="h-10 px-6 rounded-lg bg-white/5 border border-white/10 text-white/80 hover:bg-white/10 hover:text-white transition-all duration-300 font-medium"
             onClick={() => {
               setIsAttrModalOpen(true)
             }}
           >
             Özellikler
-          </Button>
-          <Button
-            type="primary"
+          </button>
+          <button
+            className="h-10 px-6 rounded-lg bg-gradient-to-r from-green-500 to-emerald-400 text-white font-semibold hover:shadow-[0_0_20px_rgba(16,185,129,0.4)] transition-all duration-300 border border-transparent"
             onClick={() => {
               window.context.createExcelFile(selectedSearch)
               message.success('Excel dosyası oluşturuldu.')
             }}
           >
             Excele Aktar
-          </Button>
+          </button>
         </div>
       </div>
       <AttrModal

@@ -16,7 +16,7 @@ function App(): JSX.Element {
       <RootLayout>
         <Content
           ref={contentContainerRef}
-          className="border-l bg-[#2d2d2d] border-l-white/20"
+          className="border-l border-transparent"
         ></Content>
       </RootLayout>
     </>
