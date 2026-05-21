@@ -4,7 +4,7 @@ import axios from 'axios'
 import http from 'http'
 import https from 'https'
 import * as cheerio from 'cheerio'
-import { isSearchCancelled } from '../../cancelState'
+import { isSearchCancelled, currentSearchId } from '../../cancelState'
 import { TempStorage } from './tempStorage'
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
@@ -151,6 +151,7 @@ async function fetchScriptContent(url: string) {
 }
 
 export const getData = async (url: string, onProgress?: (progress: any) => void) => {
+  const mySearchId = currentSearchId
   // TempStorage: veriler 10'ar üründe bir diske yazılır, bellekte birikmez
   const storage = new TempStorage('trendyol', 10)
   const linkSet = new Set<string>()
@@ -182,7 +183,7 @@ export const getData = async (url: string, onProgress?: (progress: any) => void)
   const variant = settings.variant
   try {
     for (let page = 1; page <= (trial ? 1 : 250); page++) {
-      if (isSearchCancelled) break
+      if (isSearchCancelled || mySearchId !== currentSearchId) break
 
       const extraParamsStr = extraQueryParams ? `&${extraQueryParams}` : ''
       const { data } = await axiosInstance.get(
@@ -220,7 +221,7 @@ export const getData = async (url: string, onProgress?: (progress: any) => void)
 
     await Promise.all(
       chunks.map(async (group) => {
-        if (isSearchCancelled) return
+        if (isSearchCancelled || mySearchId !== currentSearchId) return
         const queryParams = group.map((id) => `productGroupIds=${id}`).join('%')
         const variantUrl = `https://apigw.trendyol.com/discovery-sfint-search-service/api/search/color-variants?${queryParams}&channelId=1&storefrontId=1&culture=tr-TR`
 
@@ -259,8 +260,8 @@ export const getData = async (url: string, onProgress?: (progress: any) => void)
 
   // Fetch script content for all products
   for (const link of uniqueLinks) {
-    if (isSearchCancelled) {
-      console.log('Arama kullanıcı tarafından iptal edildi.')
+    if (isSearchCancelled || mySearchId !== currentSearchId) {
+      console.log('Arama kullanıcı tarafından veya yeni arama başlatıldığı için iptal edildi.')
       break
     }
     const result = await fetchScriptContent(link)
@@ -324,12 +325,13 @@ export const getData = async (url: string, onProgress?: (progress: any) => void)
 }
 
 export const getData2 = async (urls: string[]) => {
+  const mySearchId = currentSearchId
   const storage = new TempStorage('trendyol2', 10)
   let consecutiveFailures = 0
   const maxFailures = 15
 
   for (const link of urls) {
-    if (isSearchCancelled) break
+    if (isSearchCancelled || mySearchId !== currentSearchId) break
     const result = await fetchScriptContent(link)
     if (result.url && result.url.trim()) {
       storage.push(result)

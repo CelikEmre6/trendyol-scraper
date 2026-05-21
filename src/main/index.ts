@@ -25,7 +25,7 @@ import { app, BrowserWindow, ipcMain, shell } from 'electron'
 import { join } from 'path'
 import icon from '../../resources/icon.png?asset'
 import { initAutoUpdater, downloadUpdate, installUpdate } from './updater'
-import { setSearchCancelled } from './cancelState'
+import { setSearchCancelled, incrementSearchId } from './cancelState'
 
 function createWindow(): BrowserWindow {
   // Create the browser window.
@@ -115,6 +115,7 @@ app.whenReady().then(() => {
 
   ipcMain.handle('getSearchResults', async (event, ...args: Parameters<SearchResults>) => {
     setSearchCancelled(false)
+    incrementSearchId()
     return new Promise((resolve, reject) => {
       getSearchResults(...args, (progress) => {
         event.sender.send('progress-update', progress) // İlerleme yüzdesini frontend'e gönderiyoruz
@@ -125,6 +126,7 @@ app.whenReady().then(() => {
   })
   ipcMain.handle('getSearchResults2', async (_, urls) => {
     setSearchCancelled(false)
+    incrementSearchId()
     return new Promise((resolve, reject) => {
       getSearchResults2(urls)
         .then((data) => resolve(data))
