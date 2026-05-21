@@ -152,20 +152,59 @@ export const Search = () => {
 
   return (
     <div className="w-full h-full flex flex-col items-center justify-center space-y-3 relative">
-      <input
-        type="text"
-        placeholder="Trendyol / Hepsiburada Linki Giriniz"
-        value={url}
-        onChange={handleUrlChange}
-        className="w-96 text-blue-500"
-        style={{
-          height: '40px',
-          width: '60%',
-          padding: '10px',
-          borderRadius: '5px',
-          border: '1px solid #ccc'
-        }}
-      ></input>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', width: '60%' }}>
+        <input
+          type="text"
+          placeholder="Trendyol / Hepsiburada Linki Giriniz"
+          value={url}
+          onChange={handleUrlChange}
+          className="w-96 text-blue-500"
+          style={{
+            height: '40px',
+            flex: 1,
+            padding: '10px',
+            borderRadius: '5px',
+            border: '1px solid #ccc'
+          }}
+        ></input>
+        <Tooltip title="Panodan Yapıştır" placement="top">
+          <button
+            onClick={async () => {
+              try {
+                const text = await navigator.clipboard.readText()
+                if (text) setUrl(text.trim())
+              } catch {
+                message.error('Pano okunamadı')
+              }
+            }}
+            style={{
+              height: '40px',
+              width: '40px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              borderRadius: '5px',
+              border: '1px solid #ccc',
+              background: 'rgba(255,255,255,0.08)',
+              cursor: 'pointer',
+              fontSize: '18px',
+              color: '#aaa',
+              transition: 'background 0.2s, color 0.2s',
+              flexShrink: 0
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = 'rgba(79, 172, 254, 0.2)'
+              e.currentTarget.style.color = '#4facfe'
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = 'rgba(255,255,255,0.08)'
+              e.currentTarget.style.color = '#aaa'
+            }}
+          >
+            📋
+          </button>
+        </Tooltip>
+      </div>
       <Tooltip
         title={
           !url.includes('trendyol.com') || url.includes('hepsiburada.com/')

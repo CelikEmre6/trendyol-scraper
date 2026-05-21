@@ -1,19 +1,19 @@
 /* eslint-disable prettier/prettier */
 /* eslint-disable no-unsafe-finally */
 import { getSettingsJson } from '@/lib';
-import { isSearchCancelled } from '../../cancelState';
 import { CheerioCrawler, Configuration } from 'crawlee';
+import { isSearchCancelled } from '../../cancelState';
+import { TempStorage } from './tempStorage';
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 const config = Configuration.getGlobalConfig();
 config.set('persistStorage', false);
 const detailLinks = [] as string[];
 const urls = [] as string[];
-const results = [] as any[];
 let completed = 0;
 
 // Create async function to initialize crawlers
-async function initializeCrawlers(onProgress?: (progress: any) => void) {
+async function initializeCrawlers(storage: TempStorage, onProgress?: (progress: any) => void) {
 
     const summaryCrawler = new CheerioCrawler({
         statisticsOptions: {},
@@ -185,7 +185,7 @@ async function initializeCrawlers(onProgress?: (progress: any) => void) {
                 };
 
                 if (scrapedData.details.isim && scrapedData.details.isim !== 'Belirtilmemiş') {
-                    results.push(scrapedData);
+                    storage.push(scrapedData);
                 } else {
                     log.warning(`Eksik veri, Dataset'e eklenmedi: ${request.url}`);
                     throw new Error('Eksik veri');
@@ -196,13 +196,17 @@ async function initializeCrawlers(onProgress?: (progress: any) => void) {
             } finally {
                 completed++;
                 const percentVal = detailLinks.length > 0 ? ((completed / detailLinks.length) * 100).toFixed(2) : '0.00';
-                if (typeof onProgress === 'function') {
-                    onProgress({
-                        percent: percentVal,
-                        total: detailLinks.length,
-                        success: results.length,
-                        failed: completed - results.length
-                    });
+
+                // Sadece her 10 üründe bir veya en sonda arayüze mesaj göndererek IPC darboğazını (Crash) önle
+                if (completed % 10 === 0 || completed === detailLinks.length) {
+                    if (typeof onProgress === 'function') {
+                        onProgress({
+                            percent: percentVal,
+                            total: detailLinks.length,
+                            success: storage.count,
+                            failed: completed - storage.count
+                        });
+                    }
                 }
             }
         }
@@ -214,7 +218,7 @@ async function initializeCrawlers(onProgress?: (progress: any) => void) {
 // Rest of your functions remain the same...
 
 export const getDataHB = async (url: string, onProgress?: (progress: any) => void) => {
-    results.length = 0;
+    const storage = new TempStorage('hepsiburada', 10);
     urls.length = 0;
     detailLinks.length = 0;
     completed = 0;
@@ -222,7 +226,7 @@ export const getDataHB = async (url: string, onProgress?: (progress: any) => voi
     const productNumber = settings?.productNumber || 100;
     const trial = settings?.licanceType === 'trial'
     const pageCount = trial ? 1 : Math.ceil(productNumber / 36); // Hepsiburada'da sayfa başına 36 ürün var
-    const { summaryCrawler, listCrawler, detailCrawler } = await initializeCrawlers(onProgress);
+    const { summaryCrawler, listCrawler, detailCrawler } = await initializeCrawlers(storage, onProgress);
 
     let pageUrl = '';
     if (url.includes('sayfa=')) {
@@ -236,7 +240,7 @@ export const getDataHB = async (url: string, onProgress?: (progress: any) => voi
     }
 
     if (pageUrl === 'none') {
-        return results;
+        return storage.finalize();
     }
 
     if (typeof onProgress === 'function') {
@@ -254,12 +258,12 @@ export const getDataHB = async (url: string, onProgress?: (progress: any) => voi
     console.log('detailLinks:', detailLinks.length);
     await detailCrawler.run(detailLinks);
 
-    return results;
+    return storage.finalize(); // Diskten oku, geçici dosyayı sil, sonuçları dön
 }
 
 export const getDataHB2 = async (urls: string[]) => {
-    results.length = 0;
-    const { detailCrawler } = await initializeCrawlers();
+    const storage = new TempStorage('hepsiburada', 10);
+    const { detailCrawler } = await initializeCrawlers(storage);
     await detailCrawler.run(urls);
-    return results;
+    return storage.finalize();
 }
