@@ -5,7 +5,8 @@ export type ReadNote = (title: NoteInfo['title']) => Promise<NoteContent>
 export type WriteNote = (title: NoteInfo['title'], content: NoteContent) => Promise<void>
 export type CreateNote = () => Promise<NoteInfo['title'] | false>
 export type DeleteNote = (title: NoteInfo['title']) => Promise<boolean>
-export type SearchResults = (url: string) => Promise<SearchResult[]>
+export type SearchOptions = { minPage?: number; maxPage?: number; fastScan?: boolean };
+export type SearchResults = (url: string, options?: SearchOptions) => Promise<SearchResult[]>
 export type GetSettingsJson = () => Promise<Settings>
 export type SetSettingsJson = (settings: Settings) => Promise<Settings>
 

@@ -5,6 +5,7 @@ import { useSetAtom } from 'jotai'
 import { useState } from 'react'
 import { AttrModal } from './attrModal'
 import AttributeModal from './attributesModal'
+import StockModal from './stockModal'
 
 export const History = () => {
   const { selectedSearch } = useSearchResultsTable()
@@ -12,6 +13,14 @@ export const History = () => {
   const setSearchResults = useSetAtom(saveSearchResultsAtom)
   const [isAttrModalOpen, setIsAttrModalOpen] = useState(false)
   const [openAttributes, setOpenAttributes] = useState<any | null>(null)
+  const [openStockData, setOpenStockData] = useState<any[] | null>(null)
+
+  const handleOpenStock = (record: any) => {
+    setOpenStockData(record.details?.sizes || [])
+  }
+  const handleCloseStock = () => {
+    setOpenStockData(null)
+  }
 
   const handleDelete = async () => {
     await deleteSearch()
@@ -51,10 +60,14 @@ export const History = () => {
       dataIndex: 'url',
       key: 'url',
       render: (text: string) => {
-        const shortText = text?.length > 30 ? `${text.slice(0, 20)}...` : text // Linki 30 karakter ile sınırlandırıyoruz
         return (
-          <a href={text} target="_blank" rel="noopener noreferrer">
-            {shortText}
+          <a
+            href={text}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center justify-center h-8 px-4 rounded-lg bg-indigo-500/10 border border-indigo-500/30 text-indigo-400 hover:bg-indigo-500/20 hover:border-indigo-500/50 hover:shadow-[0_0_15px_rgba(99,102,241,0.3)] transition-all duration-300 font-medium text-xs whitespace-nowrap"
+          >
+            Ürüne Git
           </a>
         )
       },
@@ -89,17 +102,7 @@ export const History = () => {
       width: 100,
       sorter: (a, b) => a.details.Kategori.localeCompare(b.details.Kategori)
     },
-    {
-      title: 'Renk',
-      dataIndex: ['details', 'attributes', 'Renk'],
-      key: 'Renk',
-      width: 100,
-      sorter: (a, b) => {
-        const renkA = a.details?.attributes?.Renk || '' // Fallback to an empty string if undefined
-        const renkB = b.details?.attributes?.Renk || ''
-        return renkA.localeCompare(renkB)
-      }
-    },
+
     {
       title: 'Özellikler',
       key: 'attributesButton',
@@ -107,10 +110,42 @@ export const History = () => {
       width: 70,
       render: (_: any, record: any) => {
         return (
-          <Button type="primary" onClick={() => handleOpenAttributes(record)}>
+          <button
+            className="h-8 px-4 rounded-lg bg-blue-500/10 border border-blue-500/30 text-blue-400 hover:bg-blue-500/20 hover:border-blue-500/50 hover:shadow-[0_0_15px_rgba(59,130,246,0.3)] transition-all duration-300 font-medium text-xs"
+            onClick={() => handleOpenAttributes(record)}
+          >
             Özellikler
-          </Button>
+          </button>
         )
+      }
+    },
+    {
+      title: 'Stok Durumu',
+      key: 'stockButton',
+      width: 100,
+      render: (_: any, record: any) => {
+        const sizes = record.details?.sizes || []
+        const hasStock = sizes.some((size: any) => size.inStock === true || size.inStock === 'Stokta var')
+        
+        if (hasStock) {
+          return (
+            <button
+              className="h-8 px-4 rounded-lg bg-green-500/10 border border-green-500/30 text-green-400 hover:bg-green-500/20 hover:border-green-500/50 hover:shadow-[0_0_15px_rgba(34,197,94,0.3)] transition-all duration-300 font-medium text-xs whitespace-nowrap"
+              onClick={() => handleOpenStock(record)}
+            >
+              Stok Var
+            </button>
+          )
+        } else {
+          return (
+            <button
+              className="h-8 px-4 rounded-lg bg-red-500/10 border border-red-500/30 text-red-400 hover:bg-red-500/20 hover:border-red-500/50 hover:shadow-[0_0_15px_rgba(239,68,68,0.3)] transition-all duration-300 font-medium text-xs whitespace-nowrap"
+              onClick={() => handleOpenStock(record)}
+            >
+              Stok Yok
+            </button>
+          )
+        }
       }
     }
   ]
@@ -159,39 +194,17 @@ export const History = () => {
         rowKey={(record) => record.url}
         dataSource={selectedSearch?.results}
         columns={columns as unknown as any}
-        expandable={{
-          expandedRowRender: (record) => (
-            <Table
-              rowKey={(size: any) => size.itemNumber}
-              dataSource={(record.details as any)?.sizes}
-              columns={[
-                {
-                  title: 'itemNumber',
-                  dataIndex: 'itemNumber',
-                  key: 'itemNumber'
-                },
-                {
-                  title: 'Beden',
-                  dataIndex: 'beden',
-                  key: 'beden'
-                },
-                {
-                  title: 'Stok Durumu',
-                  dataIndex: 'inStock',
-                  key: 'inStock'
-                }
-              ]}
-              pagination={false} // Disable pagination for the nested table
-            />
-          ),
-          rowExpandable: (record: any) => record.name !== 'Not Expandable'
-        }}
         style={{ userSelect: 'text' }}
       />
       <AttributeModal
         open={!!openAttributes}
         onClose={handleCloseAttributes}
         attributes={openAttributes || []}
+      />
+      <StockModal
+        open={!!openStockData}
+        onClose={handleCloseStock}
+        sizes={openStockData || []}
       />
     </div>
   )

@@ -1,10 +1,10 @@
 /* eslint-disable no-unsafe-finally */
 import { getSettingsJson } from '@/lib'
 import axios from 'axios'
+import * as cheerio from 'cheerio'
 import http from 'http'
 import https from 'https'
-import * as cheerio from 'cheerio'
-import { isSearchCancelled, currentSearchId } from '../../cancelState'
+import { currentSearchId, isSearchCancelled } from '../../cancelState'
 import { TempStorage } from './tempStorage'
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
@@ -150,7 +150,7 @@ async function fetchScriptContent(url: string) {
   }
 }
 
-export const getData = async (url: string, onProgress?: (progress: any) => void) => {
+export const getData = async (url: string, options?: any, onProgress?: (progress: any) => void) => {
   const mySearchId = currentSearchId
   // TempStorage: veriler 10'ar üründe bir diske yazılır, bellekte birikmez
   const storage = new TempStorage('trendyol', 10)
@@ -178,11 +178,16 @@ export const getData = async (url: string, onProgress?: (progress: any) => void)
     onProgress({ message: 'Ürün Linkleri Toplanıyor...' })
   }
   const settings = await getSettingsJson()
-  const productNumber = settings.productNumber
+  let productNumber = settings.productNumber
+  if (options?.minPage || options?.maxPage) {
+    productNumber = Infinity // Gelişmiş arama girildiyse ayarları yoksay ve sayfa sınırına göre çalış
+  }
   const trial = settings.licanceType === 'trial'
   const variant = settings.variant
   try {
-    for (let page = 1; page <= (trial ? 1 : 250); page++) {
+    const startPage = options?.minPage ? parseInt(options.minPage) : 1
+    const endPage = options?.maxPage ? parseInt(options.maxPage) : (trial ? 1 : 250)
+    for (let page = startPage; page <= endPage; page++) {
       if (isSearchCancelled || mySearchId !== currentSearchId) break
 
       const extraParamsStr = extraQueryParams ? `&${extraQueryParams}` : ''
@@ -200,15 +205,63 @@ export const getData = async (url: string, onProgress?: (progress: any) => void)
       const products: any[] = data.products || []
 
       for (const product of products) {
-        productGroupSet.add(product.groupId)
-        linkSet.add('https://www.trendyol.com' + product.url)
-        if (linkSet.size >= productNumber) break
+        if (options?.fastScan) {
+          const dictionary: any = {
+            url: 'https://www.trendyol.com' + product.url,
+            groupId: product.groupId,
+            details: {
+              isim: product.name || 'Belirtilmemiş',
+              productId: product.id || 'Belirtilmemiş',
+              marka: product.brand || 'Belirtilmemiş',
+              Kategori: product.category?.name || 'Belirtilmemiş',
+              KategoriHiyerarsi: 'Belirtilmemiş',
+              saticiAdi: 'Belirtilmemiş',
+              saticiId: product.merchantId || 'Belirtilmemiş',
+              saticiSehri: 'Belirtilmemiş',
+              saticiEmail: 'Belirtilmemiş',
+              code: product.itemNumber || 'Belirtilmemiş',
+              indirimliFiyati: product.price?.discountedPrice || product.price?.current || 'Belirtilmemiş',
+              SatisFiyati: product.price?.sellingPrice || product.price?.current || 'Belirtilmemiş',
+              OrjinalFiyati: product.price?.originalPrice || product.price?.old || 'Belirtilmemiş',
+              KuponluFiyatı: 'Belirtilmemiş',
+              vergi: 'Belirtilmemiş',
+              ortalamaDegerlendirme: product.ratingScore?.averageRating ?? 'Belirtilmemiş',
+              toplamDegerlendirmeSayısı: product.ratingScore?.totalCount ?? 'Belirtilmemiş',
+              toplamYorumSayısı: 'Belirtilmemiş',
+              bedavaKargo: product.freeCargo ? 'bedava' : 'bedava değil',
+              attributes: {},
+              açıklama: 'Belirtilmemiş',
+              images: product.images || [],
+              sizes: [
+                {
+                  itemNumber: product.itemNumber || '',
+                  beden: product.variantValue || 'Standart',
+                  barcode: '',
+                  inStock: product.tagStockBar?.isSoldOut ? 'Stokta yok' : 'Stokta var'
+                }
+              ]
+            }
+          }
+          storage.push(dictionary)
+          if (storage.count >= productNumber) break
+        } else {
+          productGroupSet.add(product.groupId)
+          linkSet.add('https://www.trendyol.com' + product.url)
+          if (linkSet.size >= productNumber) break
+        }
       }
 
-      if (products.length === 0 || linkSet.size >= productNumber) break
+      if (products.length === 0 || (options?.fastScan ? storage.count >= productNumber : linkSet.size >= productNumber)) break
     }
   } catch (error) {
     console.error('Data fetch error:', error)
+  }
+
+  if (options?.fastScan) {
+    if (typeof onProgress === 'function') {
+      onProgress({ message: '' })
+    }
+    return storage.finalize()
   }
 
   if (variant) {

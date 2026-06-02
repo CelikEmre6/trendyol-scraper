@@ -28,8 +28,8 @@ try {
 
 
 
-    getSearchResults: (url: Parameters<SearchResults>[0]) =>
-      ipcRenderer.invoke('getSearchResults', url),
+    getSearchResults: (url: string, options?: any) =>
+      ipcRenderer.invoke('getSearchResults', url, options),
     getSearchResults2: (urls: Parameters<SearchResults>[0]) =>
       ipcRenderer.invoke('getSearchResults2', urls),
 

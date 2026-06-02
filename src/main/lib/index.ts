@@ -1,6 +1,7 @@
 /* eslint-disable prettier/prettier */
 import { getData, getData2 } from '@/browser/func/getData'
 import { getDataHB, getDataHB2 } from '@/browser/func/getDataHb'
+import { getDataHbAxios } from '@/browser/func/getDataHbAxios'
 import { appDirectoryName, fileEncoding } from '@shared/constants'
 import { Search } from '@shared/models'
 import {
@@ -22,15 +23,15 @@ export const getRootDir = () => {
 
 
 
-export const getSearchResults = async (url: string, onProgress?: (progress: any) => void) => {
+export const getSearchResults = async (url: string, options?: any, onProgress?: (progress: any) => void) => {
   let data = [] as any
   const settings = await getSettingsJson()
   if (url.includes('trendyol.com')) {
-    data = await getData(url, onProgress)
+    data = await getData(url, options, onProgress)
   } else {
     if (settings.licancePlan !== 'pro') return []
-    console.log('Hepsiburada linki tespit edildi, veriler çekiliyor...')
-    data = await getDataHB(url, onProgress)
+    console.log('Hepsiburada linki tespit edildi, veriler çekiliyor (Axios Modu)...')
+    data = await getDataHbAxios(url, options, onProgress)
   }
   return data
 }

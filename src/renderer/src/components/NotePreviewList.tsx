@@ -35,10 +35,8 @@ export const NotePreviewList = ({ className, onSelect, ...props }: NotePreviewLi
   return (
     <div className="flex flex-col h-full">
       <div className="p-2 border-b border-zinc-700 flex gap-2">
-        <Button
-          type="primary"
-          danger
-          className="flex-1 text-xs"
+        <button
+          className="flex-1 h-8 rounded-lg bg-red-500/10 border border-red-500/30 text-red-400 hover:bg-red-500/20 hover:border-red-500/50 hover:shadow-[0_0_15px_rgba(239,68,68,0.3)] transition-all duration-300 font-medium text-xs"
           onClick={async () => {
             const result = await cleanEmpty()
             if (result !== false) {
@@ -47,14 +45,15 @@ export const NotePreviewList = ({ className, onSelect, ...props }: NotePreviewLi
           }}
         >
           Boş Aramaları Temizle
-        </Button>
-        <Button
-          type="default"
-          icon={<ReloadOutlined spin={refreshing} />}
-          loading={refreshing}
+        </button>
+        <button
+          className="h-8 w-8 flex items-center justify-center rounded-lg bg-white/5 border border-white/10 text-white/80 hover:bg-white/10 hover:text-white transition-all duration-300 disabled:opacity-50"
           onClick={handleRefresh}
           title="Listeyi Güncelle"
-        />
+          disabled={refreshing}
+        >
+          <ReloadOutlined spin={refreshing} />
+        </button>
       </div>
       {isEmpty(searchResults) ? (
         <ul className={twMerge('text-center pt-4', className)}>

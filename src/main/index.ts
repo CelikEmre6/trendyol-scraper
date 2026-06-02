@@ -113,11 +113,11 @@ app.whenReady().then(() => {
   })
   ipcMain.handle('loadStockLinks', () => loadStockLinks())
 
-  ipcMain.handle('getSearchResults', async (event, ...args: Parameters<SearchResults>) => {
+  ipcMain.handle('getSearchResults', async (event, url: string, options?: any) => {
     setSearchCancelled(false)
     incrementSearchId()
     return new Promise((resolve, reject) => {
-      getSearchResults(...args, (progress) => {
+      getSearchResults(url, options, (progress) => {
         event.sender.send('progress-update', progress) // İlerleme yüzdesini frontend'e gönderiyoruz
       })
         .then((data) => resolve(data)) // İşlem tamamlandığında veriyi frontend'e geri döndürür

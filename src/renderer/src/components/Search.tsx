@@ -1,6 +1,6 @@
-import { updateAvailableAtom, updateStateAtom, downloadProgressAtom, saveSearchResultsAtom } from '@renderer/store'
+import { downloadProgressAtom, saveSearchResultsAtom, updateAvailableAtom, updateStateAtom } from '@renderer/store'
 import { appVersion } from '@shared/constants'
-import { Button, message, Progress, Tooltip } from 'antd'
+import { message, Progress, Tooltip } from 'antd'
 import { useAtom, useSetAtom } from 'jotai'
 import { useEffect, useState } from 'react'
 
@@ -12,6 +12,10 @@ export const Search = () => {
   const [searchDescription, setSearchDescription] = useState('')
   const [loading, setLoading] = useState(false)
   const [dots, setDots] = useState('')
+  const [showAdvanced, setShowAdvanced] = useState(false)
+  const [minPage, setMinPage] = useState('')
+  const [maxPage, setMaxPage] = useState('')
+  const [fastScan, setFastScan] = useState(false)
   const setSearchResults = useSetAtom(saveSearchResultsAtom)
 
   useEffect(() => {
@@ -67,6 +71,9 @@ export const Search = () => {
     setSearchDescription('')
     setUrl('')
     setSelectedUrl(null)
+    setMinPage('')
+    setMaxPage('')
+    setFastScan(false)
   }
 
   const handleUpdateClick = () => {
@@ -208,7 +215,118 @@ export const Search = () => {
             📋
           </button>
         </Tooltip>
+        <Tooltip title="Temizle" placement="top">
+          <button
+            onClick={() => {
+              setUrl('')
+              setMinPage('')
+              setMaxPage('')
+            }}
+            style={{
+              height: '56px',
+              width: '56px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              borderRadius: '12px',
+              border: '1px solid rgba(255,255,255,0.1)',
+              background: 'rgba(255,255,255,0.05)',
+              cursor: 'pointer',
+              fontSize: '24px',
+              color: '#aaa',
+              transition: 'all 0.3s ease',
+              flexShrink: 0,
+              backdropFilter: 'blur(10px)'
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = 'rgba(239, 68, 68, 0.2)'
+              e.currentTarget.style.color = '#ef4444'
+              e.currentTarget.style.borderColor = 'rgba(239, 68, 68, 0.4)'
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = 'rgba(255,255,255,0.05)'
+              e.currentTarget.style.color = '#aaa'
+              e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)'
+            }}
+          >
+            🗑️
+          </button>
+        </Tooltip>
+        <Tooltip title="Gelişmiş Arama" placement="top">
+          <button
+            onClick={() => setShowAdvanced(!showAdvanced)}
+            style={{
+              height: '56px',
+              width: '56px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              borderRadius: '12px',
+              border: showAdvanced ? '1px solid rgba(79, 172, 254, 0.5)' : '1px solid rgba(255,255,255,0.1)',
+              background: showAdvanced ? 'rgba(79, 172, 254, 0.15)' : 'rgba(255,255,255,0.05)',
+              cursor: 'pointer',
+              fontSize: '24px',
+              color: showAdvanced ? '#4facfe' : '#aaa',
+              transition: 'all 0.3s ease',
+              flexShrink: 0,
+              backdropFilter: 'blur(10px)'
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = 'rgba(79, 172, 254, 0.2)'
+              e.currentTarget.style.color = '#4facfe'
+              e.currentTarget.style.borderColor = 'rgba(79, 172, 254, 0.4)'
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = showAdvanced ? 'rgba(79, 172, 254, 0.15)' : 'rgba(255,255,255,0.05)'
+              e.currentTarget.style.color = showAdvanced ? '#4facfe' : '#aaa'
+              e.currentTarget.style.borderColor = showAdvanced ? 'rgba(79, 172, 254, 0.5)' : 'rgba(255,255,255,0.1)'
+            }}
+          >
+            ⚙️
+          </button>
+        </Tooltip>
       </div>
+      {showAdvanced && (
+        <div className="w-[60%] max-w-2xl flex items-center gap-4 p-4 rounded-xl border border-white/10 bg-white/5 backdrop-blur-md">
+          <div className="flex-1">
+            <label className="block text-xs text-white/50 mb-1">Başlangıç Sayfası</label>
+            <input
+              type="number"
+              placeholder="Örn: 1"
+              value={minPage}
+              onChange={(e) => setMinPage(e.target.value)}
+              className="w-full h-10 px-3 text-white bg-black/20 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all placeholder-white/30"
+              min="1"
+            />
+          </div>
+          <div className="flex-1">
+            <label className="block text-xs text-white/50 mb-1">Bitiş Sayfası</label>
+            <input
+              type="number"
+              placeholder="Örn: 50"
+              value={maxPage}
+              onChange={(e) => setMaxPage(e.target.value)}
+              className="w-full h-10 px-3 text-white bg-black/20 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all placeholder-white/30"
+              min="1"
+            />
+          </div>
+          <div className="flex-1 flex flex-col items-center justify-center pt-5">
+            <Tooltip title="Detaylara girmez, stok ve özellikleri almaz, sadece listeyi çeker. Çok hızlıdır." placement="top">
+              <label className="flex items-center gap-2 cursor-pointer group">
+                <input
+                  type="checkbox"
+                  checked={fastScan}
+                  onChange={(e) => setFastScan(e.target.checked)}
+                  className="w-5 h-5 rounded border-white/10 bg-black/20 text-primary focus:ring-primary/50 focus:ring-offset-0 cursor-pointer transition-all"
+                />
+                <span className="text-sm font-medium text-white/70 group-hover:text-white transition-colors">
+                  ⚡ Hızlı Tarama
+                </span>
+              </label>
+            </Tooltip>
+          </div>
+        </div>
+      )}
       <Tooltip
         title={
           !url.includes('trendyol.com') || url.includes('hepsiburada.com/')
@@ -225,7 +343,32 @@ export const Search = () => {
             setProgress(0)
             setProgressStats({ percent: 0, total: 0, success: 0, failed: 0 })
             try {
-              const data = await window.context.getSearchResults(url!)
+              const options = {
+                minPage: minPage ? parseInt(minPage) : undefined,
+                maxPage: maxPage ? parseInt(maxPage) : undefined,
+                fastScan: fastScan
+              }
+              
+              if (options.minPage !== undefined && options.maxPage !== undefined) {
+                if (options.maxPage - options.minPage + 1 > 200) {
+                  message.error('Aralık 208  sayfadan (yaklaşık 5000 ürün) fazla olamaz.')
+                  setLoading(false)
+                  return
+                }
+                if (options.minPage > options.maxPage) {
+                  message.error('Başlangıç sayfası bitiş sayfasından büyük olamaz.')
+                  setLoading(false)
+                  return
+                }
+              } else if (options.minPage === undefined && options.maxPage !== undefined) {
+                if (options.maxPage > 208) {
+                  message.error('Bitiş sayfası en fazla 208 olabilir.')
+                  setLoading(false)
+                  return
+                }
+              }
+
+              const data = await window.context.getSearchResults(url!, options)
               const newSearch = {
                 results: data.map((item) => ({ ...item })),
                 date: new Date().getTime(),
