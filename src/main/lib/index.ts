@@ -14,7 +14,7 @@ import {
 import { exec } from 'child_process'
 import { dialog } from 'electron'
 import ExcelJS from 'exceljs'
-import { readFile, readdir, remove, writeFile } from 'fs-extra'
+import { readFile, readdir, remove, outputFile } from 'fs-extra'
 import os, { homedir } from 'os'
 
 export const getRootDir = () => {
@@ -86,7 +86,7 @@ export const getSettingsJson: GetSettingsJson = async () => {
   } catch (error) {
     const macAddress = getMacAddress()
 
-    await writeFile(
+    await outputFile(
       `${getRootDir()}/settings.json`,
       JSON.stringify(
         {
@@ -114,7 +114,7 @@ export const getSettingsJson: GetSettingsJson = async () => {
 }
 
 export const writeSettingsJson: SetSettingsJson = async (settings) => {
-  await writeFile(`${getRootDir()}/settings.json`, JSON.stringify(settings, null, 2), {
+  await outputFile(`${getRootDir()}/settings.json`, JSON.stringify(settings, null, 2), {
     encoding: fileEncoding
   })
   return settings
@@ -124,7 +124,7 @@ export const saveSearch: SaveSearch = async ({ results, date, description }) => 
   const filePath = `${getRootDir()}/${date}.json`
 
   try {
-    await writeFile(
+    await outputFile(
       filePath,
       JSON.stringify(
         {
@@ -443,7 +443,7 @@ export const createExcelFile: SaveSearch = async (jsonData) => {
 }
 
 export const saveStockLinks = async (links) => {
-  await writeFile(`${getRootDir()}/links.json`, links, {
+  await outputFile(`${getRootDir()}/links.json`, links, {
     encoding: fileEncoding
   })
   return links
@@ -493,5 +493,20 @@ export const loadStockLinksFromExcel = async (path: string, overWrite: boolean) 
   } catch (err) {
     console.error('Dosya okunurken hata oluştu:', err)
     throw err
+  }
+}
+
+export const saveMyProducts = async (products: import('@shared/models').MyProduct[]) => {
+  await outputFile(`${getRootDir()}/myProducts.json`, JSON.stringify(products, null, 2), {
+    encoding: fileEncoding
+  })
+}
+
+export const getMyProducts = async (): Promise<import('@shared/models').MyProduct[]> => {
+  try {
+    const data = await readFile(`${getRootDir()}/myProducts.json`, { encoding: fileEncoding })
+    return JSON.parse(data)
+  } catch (error) {
+    return []
   }
 }
