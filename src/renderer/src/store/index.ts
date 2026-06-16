@@ -108,3 +108,5 @@ export const stockLinksAtom = atom<string[]>([]) // Başlangıçta boş bir dizi
 export const updateAvailableAtom = atom<{ version: string; releaseNotes?: string } | null>(null)
 export const updateStateAtom = atom<'idle' | 'available' | 'downloading' | 'downloaded'>('idle')
 export const downloadProgressAtom = atom<{ percent: number; transferred: number; total: number; bytesPerSecond: number } | null>(null)
+
+export const activeTabAtom = atom<string>('1')

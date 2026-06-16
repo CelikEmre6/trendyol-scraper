@@ -1,4 +1,4 @@
-import { downloadProgressAtom, saveSearchResultsAtom, updateAvailableAtom, updateStateAtom } from '@renderer/store'
+import { activeTabAtom, downloadProgressAtom, saveSearchResultsAtom, updateAvailableAtom, updateStateAtom } from '@renderer/store'
 import { appVersion } from '@shared/constants'
 import { message, Progress, Tooltip } from 'antd'
 import { useAtom, useSetAtom } from 'jotai'
@@ -17,6 +17,7 @@ export const Search = () => {
   const [maxPage, setMaxPage] = useState('')
   const [fastScan, setFastScan] = useState(false)
   const setSearchResults = useSetAtom(saveSearchResultsAtom)
+  const setActiveTab = useSetAtom(activeTabAtom)
 
   useEffect(() => {
     let interval: NodeJS.Timeout
@@ -379,10 +380,11 @@ export const Search = () => {
               await setSearchResults(newSearch)
               refresh()
               message.success('Veriler Alındı')
+              setActiveTab('2')
             } catch (error: any) {
               console.error(error)
               const errorMessage = error?.message?.replace(/Error invoking remote method '.*': Error: /, '') || 'Veriler Alınamadı'
-              message.error(errorMessage)
+              message.error(errorMessage, 7)
             } finally {
               setLoading(false)
             }

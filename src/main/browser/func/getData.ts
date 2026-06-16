@@ -39,14 +39,12 @@ async function fetchScriptContent(url: string) {
     }
 
     if (!matchingScript) {
-      console.log(url)
-      return {}
+      return { errorReason: 'Sayfa yapısı algılanamadı (Hata Kodu: E1 - Güvenlik Duvarı)' }
     }
 
     const rawJson = matchingScript.split('window["__envoy__SHARED_PROPS"]=')[1]
     if (!rawJson) {
-      console.log(url)
-      return {}
+      return { errorReason: 'Ürün verisi okunamadı (Hata Kodu: E2 - Veri Formatı)' }
     }
 
     // matchingScript artık gerekmez
@@ -55,9 +53,7 @@ async function fetchScriptContent(url: string) {
     let jsonObject: any = JSON.parse(rawJson)
 
     if (!jsonObject?.product) {
-      console.log('No product data found in the parsed script.')
-      jsonObject = null
-      return {}
+      return { errorReason: 'Ürün detayları eksik (Hata Kodu: E3 - Boş Ürün)' }
     }
 
     const product = jsonObject.product
@@ -147,9 +143,9 @@ async function fetchScriptContent(url: string) {
     jsonObject = null
 
     return dictionary
-  } catch (error) {
-    console.log('Error fetching or parsing data:', error)
-    return {}
+  } catch (error: any) {
+    const errorReason = error.response ? `Sunucu erişimi reddetti (Hata Kodu: HTTP-${error.response.status})` : 'Bağlantı kurulamadı (Hata Kodu: E4 - Ağ Bağlantısı)'
+    return { errorReason }
   }
 }
 
@@ -264,6 +260,12 @@ export const getData = async (url: string, options?: any, onProgress?: (progress
     if (typeof onProgress === 'function') {
       onProgress({ message: '' })
     }
+    if (storage.count === 0) {
+      storage.cleanup()
+      throw new Error(
+        'Hiçbir ürün bulunamadı. Linki kontrol ediniz veya Trendyol tarafından engellenmiş olabilirsiniz.'
+      )
+    }
     return storage.finalize()
   }
 
@@ -326,12 +328,13 @@ export const getData = async (url: string, options?: any, onProgress?: (progress
       consecutiveFailures = 0
     } else {
       consecutiveFailures++
+      console.warn(`Ürün başarısız (${link}): ${result.errorReason || 'Bilinmeyen Hata'}`)
       if (consecutiveFailures >= maxFailures) {
-        console.warn(`Üst üste ${maxFailures} üründen veri alınamadı. İşlem durduruluyor.`)
+        console.warn(`Üst üste ${maxFailures} üründen veri alınamadı. İşlem durduruluyor. Son Hata: ${result.errorReason}`)
         if (storage.count === 0) {
           storage.cleanup()
           throw new Error(
-            `Üst üste ${maxFailures} üründen veri alınamadı. Trendyol sayfa yapısı değişmiş veya IP adresiniz engellenmiş olabilir.`
+            `Üst üste ${maxFailures} üründen veri alınamadı. (Sebep: ${result.errorReason || 'Bilinmeyen'}). IP adresiniz engellenmiş veya sayfa yapısı değişmiş olabilir.`
           )
         } else {
           break
@@ -369,10 +372,10 @@ export const getData = async (url: string, options?: any, onProgress?: (progress
     onProgress({ message: '' })
   }
 
-  if (storage.count === 0 && uniqueLinks.length > 0) {
+  if (storage.count === 0) {
     storage.cleanup()
     throw new Error(
-      'Hiçbir üründen veri alınamadı. Trendyol sayfa yapısı değişmiş veya IP adresiniz engellenmiş olabilir.'
+      'Hiçbir ürün bulunamadı. Linki kontrol ediniz veya Trendyol tarafından engellenmiş olabilirsiniz.'
     )
   }
 
@@ -394,11 +397,12 @@ export const getData2 = async (urls: string[]) => {
       consecutiveFailures = 0
     } else {
       consecutiveFailures++
+      console.warn(`Ürün başarısız (${link}): ${result.errorReason || 'Bilinmeyen Hata'}`)
       if (consecutiveFailures >= maxFailures) {
         if (storage.count === 0) {
           storage.cleanup()
           throw new Error(
-            `Üst üste ${maxFailures} üründen veri alınamadı. Trendyol sayfa yapısı değişmiş veya IP adresiniz engellenmiş olabilir.`
+            `Üst üste ${maxFailures} üründen veri alınamadı. (Sebep: ${result.errorReason || 'Bilinmeyen'}). IP adresiniz engellenmiş veya sayfa yapısı değişmiş olabilir.`
           )
         } else {
           break
@@ -408,10 +412,10 @@ export const getData2 = async (urls: string[]) => {
     await new Promise((resolve) => setTimeout(resolve, 100))
   }
 
-  if (storage.count === 0 && urls.length > 0) {
+  if (storage.count === 0) {
     storage.cleanup()
     throw new Error(
-      'Hiçbir üründen veri alınamadı. Trendyol sayfa yapısı değişmiş veya IP adresiniz engellenmiş olabilir.'
+      'Hiçbir ürün bulunamadı. Linkleri kontrol ediniz veya Trendyol tarafından engellenmiş olabilirsiniz.'
     )
   }
 

@@ -258,6 +258,10 @@ export const getDataHB = async (url: string, onProgress?: (progress: any) => voi
     console.log('detailLinks:', detailLinks.length);
     await detailCrawler.run(detailLinks);
 
+    if (storage.count === 0) {
+        storage.cleanup();
+        throw new Error('Hiçbir ürün bulunamadı. Linki kontrol ediniz veya Hepsiburada tarafından engellenmiş olabilirsiniz.');
+    }
     return storage.finalize(); // Diskten oku, geçici dosyayı sil, sonuçları dön
 }
 
@@ -265,5 +269,9 @@ export const getDataHB2 = async (urls: string[]) => {
     const storage = new TempStorage('hepsiburada', 10);
     const { detailCrawler } = await initializeCrawlers(storage);
     await detailCrawler.run(urls);
+    if (storage.count === 0) {
+        storage.cleanup();
+        throw new Error('Hiçbir ürün bulunamadı. Linki kontrol ediniz veya Hepsiburada tarafından engellenmiş olabilirsiniz.');
+    }
     return storage.finalize();
 }

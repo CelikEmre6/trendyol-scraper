@@ -1,10 +1,11 @@
-import { saveSearchResultsAtom } from '@renderer/store'
+import { activeTabAtom, saveSearchResultsAtom } from '@renderer/store'
 import { Button, Input, message, Modal } from 'antd'
 import { useSetAtom } from 'jotai'
 import { useEffect, useState } from 'react'
 
 export const StockLinksComponent = () => {
   const setSearchResults = useSetAtom(saveSearchResultsAtom)
+  const setActiveTab = useSetAtom(activeTabAtom)
   const [linkCounter, setLinkCounter] = useState([
     {
       id: '1',
@@ -113,7 +114,7 @@ export const StockLinksComponent = () => {
         content: 'Veriler Alındı',
         key: 'TekilUrun'
       })
-      window.location.reload()
+      setActiveTab('2')
     } catch (error: any) {
       console.error(error)
       const errorMessage = error?.message?.replace(/Error invoking remote method '.*': Error: /, '') || 'Veriler Alınamadı'

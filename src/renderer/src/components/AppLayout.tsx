@@ -10,6 +10,8 @@ import { NotePreviewList } from './NotePreviewList'
 import { Search } from './Search'
 import { Settings } from './Settings'
 import { StockLinksComponent } from './StockLinks'
+import { useAtom } from 'jotai'
+import { activeTabAtom } from '@renderer/store'
 export const RootLayout = ({ children, className, ...props }: ComponentProps<'main'>) => {
   return (
     <main className={twMerge('flex flex-row h-screen relative overflow-hidden bg-[#09090b]', className)} {...props}>
@@ -37,9 +39,7 @@ export const Sidebar = ({ className, children, ...props }: ComponentProps<'aside
   )
 }
 
-const onChange = (key: string) => {
-  console.log(key)
-}
+// Tab onChange is now handled inside Content
 
 const items: TabsProps['items'] = [
   {
@@ -87,6 +87,7 @@ export const Content = forwardRef<HTMLDivElement, ComponentProps<'div'>>(
   ({ className, children, ...props }, ref) => {
     const [loading, setLoading] = useState(true)
     const { settings, handleUpdateSettings } = useSettings()
+    const [activeTab, setActiveTab] = useAtom(activeTabAtom)
 
     // const checkVersion = async () => {
     //   await fetch(licance_api_url + '/application/trendyol-scraper', {
@@ -288,7 +289,8 @@ export const Content = forwardRef<HTMLDivElement, ComponentProps<'div'>>(
       >
         <div ref={ref} className={twMerge('flex-1 h-full overflow-auto z-10', className)} {...props}>
           <Tabs
-            onChange={onChange}
+            activeKey={activeTab}
+            onChange={(key) => setActiveTab(key)}
             type="line"
             items={items}
             style={{ width: '100%' }}

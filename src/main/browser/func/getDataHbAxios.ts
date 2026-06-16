@@ -149,6 +149,12 @@ export const getDataHbAxios = async (url: string, options?: any, onProgress?: (p
 
   if (options?.fastScan || detailLinks.length === 0) {
     if (typeof onProgress === 'function') onProgress({ message: '' })
+    if (storage.count === 0) {
+      storage.cleanup()
+      throw new Error(
+        'Hiçbir ürün bulunamadı. Linki kontrol ediniz veya Hepsiburada tarafından engellenmiş olabilirsiniz.'
+      )
+    }
     return storage.finalize()
   }
 
@@ -269,5 +275,11 @@ export const getDataHbAxios = async (url: string, options?: any, onProgress?: (p
   await detailCrawler.run(linksToScrape)
 
   if (typeof onProgress === 'function') onProgress({ message: '' })
+  if (storage.count === 0) {
+    storage.cleanup()
+    throw new Error(
+      'Hiçbir ürün bulunamadı. Linki kontrol ediniz veya Hepsiburada tarafından engellenmiş olabilirsiniz.'
+    )
+  }
   return storage.finalize()
 }
