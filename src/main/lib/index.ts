@@ -1,6 +1,6 @@
 /* eslint-disable prettier/prettier */
 import { getData, getData2 } from '@/browser/func/getData'
-import { getDataHB, getDataHB2 } from '@/browser/func/getDataHb'
+import { getDataHB2 } from '@/browser/func/getDataHb'
 import { getDataHbAxios } from '@/browser/func/getDataHbAxios'
 import { appDirectoryName, fileEncoding } from '@shared/constants'
 import { Search } from '@shared/models'
@@ -14,7 +14,7 @@ import {
 import { exec } from 'child_process'
 import { dialog } from 'electron'
 import ExcelJS from 'exceljs'
-import { readFile, readdir, remove, outputFile } from 'fs-extra'
+import { outputFile, readFile, readdir, remove } from 'fs-extra'
 import os, { homedir } from 'os'
 
 export const getRootDir = () => {
@@ -493,20 +493,5 @@ export const loadStockLinksFromExcel = async (path: string, overWrite: boolean) 
   } catch (err) {
     console.error('Dosya okunurken hata oluştu:', err)
     throw err
-  }
-}
-
-export const saveMyProducts = async (products: import('@shared/models').MyProduct[]) => {
-  await outputFile(`${getRootDir()}/myProducts.json`, JSON.stringify(products, null, 2), {
-    encoding: fileEncoding
-  })
-}
-
-export const getMyProducts = async (): Promise<import('@shared/models').MyProduct[]> => {
-  try {
-    const data = await readFile(`${getRootDir()}/myProducts.json`, { encoding: fileEncoding })
-    return JSON.parse(data)
-  } catch (error) {
-    return []
   }
 }

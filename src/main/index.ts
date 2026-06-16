@@ -1,6 +1,6 @@
 import {
-  createExcelFile,
   cleanEmptySearches,
+  createExcelFile,
   deleteSearch,
   getSearch,
   getSearchAttributes,
@@ -18,14 +18,13 @@ import {
   DeleteSearch,
   GetSearch,
   SaveSearch,
-  SearchResults,
   SetSettingsJson
 } from '@shared/types'
 import { app, BrowserWindow, ipcMain, shell } from 'electron'
 import { join } from 'path'
 import icon from '../../resources/icon.png?asset'
-import { initAutoUpdater, downloadUpdate, installUpdate } from './updater'
-import { setSearchCancelled, incrementSearchId } from './cancelState'
+import { incrementSearchId, setSearchCancelled } from './cancelState'
+import { downloadUpdate, initAutoUpdater, installUpdate } from './updater'
 
 function createWindow(): BrowserWindow {
   // Create the browser window.
