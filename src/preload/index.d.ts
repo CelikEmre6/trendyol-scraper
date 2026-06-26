@@ -19,7 +19,8 @@ declare global {
 
       solveCaptcha: () => Promise<void>
       getSearchResults: SearchResults
-      getSearchResults2: SearchResults
+      getSearchResults2: (urls: string) => Promise<any[]>
+      resumeSearch: (search: any) => Promise<any>
       getSettingsJson: GetSettingsJson
       setSettingsJson: SetSettingsJson
       saveSearch: SaveSearch

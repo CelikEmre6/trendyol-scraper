@@ -1,7 +1,6 @@
 import {
   DeleteSearch,
   SaveSearch,
-  SearchResults,
   SetSettingsJson
 } from '@shared/types'
 import { contextBridge, ipcRenderer } from 'electron'
@@ -30,8 +29,10 @@ try {
 
     getSearchResults: (url: string, options?: any) =>
       ipcRenderer.invoke('getSearchResults', url, options),
-    getSearchResults2: (urls: Parameters<SearchResults>[0]) =>
+    getSearchResults2: (urls: string) =>
       ipcRenderer.invoke('getSearchResults2', urls),
+    resumeSearch: (searchData: any) =>
+      ipcRenderer.invoke('resumeSearch', searchData),
 
     solveCaptcha: () => ipcRenderer.invoke('solveCaptcha'),
 
@@ -71,7 +72,7 @@ try {
     },
     startDownloadUpdate: () => ipcRenderer.invoke('start-download-update'),
     installUpdate: () => ipcRenderer.invoke('install-update'),
-    
+
     // Search progress
     onSearchProgress: (callback: (progress: any) => void) => {
       // Create a specific listener instance to avoid duplicate listeners when re-rendered

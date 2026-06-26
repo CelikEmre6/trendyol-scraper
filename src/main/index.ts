@@ -9,6 +9,7 @@ import {
   getSettingsJson,
   loadStockLinks,
   loadStockLinksFromExcel,
+  resumeSearch,
   saveSearch,
   saveStockLinks,
   writeSettingsJson
@@ -121,6 +122,17 @@ app.whenReady().then(() => {
       })
         .then((data) => resolve(data)) // İşlem tamamlandığında veriyi frontend'e geri döndürür
         .catch((error) => reject(error)) // Hata olursa bunu yakalar
+    })
+  })
+  ipcMain.handle('resumeSearch', async (event, searchData: any) => {
+    setSearchCancelled(false)
+    incrementSearchId()
+    return new Promise((resolve, reject) => {
+      resumeSearch(searchData, (progress: any) => {
+        event.sender.send('progress-update', progress)
+      })
+        .then((data: any) => resolve(data))
+        .catch((error: any) => reject(error))
     })
   })
   ipcMain.handle('getSearchResults2', async (_, urls) => {

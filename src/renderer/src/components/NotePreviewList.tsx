@@ -1,11 +1,11 @@
-import { cleanEmptySearchesAtom, refreshSearchesAtom } from '@renderer/store'
 import { ReloadOutlined } from '@ant-design/icons'
-import { Button, message } from 'antd'
+import { useSearchResults } from '@renderer/hooks/useSearchList'
+import { activeTabAtom, cleanEmptySearchesAtom, refreshSearchesAtom, resumeSearchTriggerAtom } from '@renderer/store'
+import { message } from 'antd'
 import { useSetAtom } from 'jotai'
 import { isEmpty } from 'lodash'
 import { ComponentProps, useCallback, useState } from 'react'
 import { twMerge } from 'tailwind-merge'
-import { useSearchResults } from '@renderer/hooks/useSearchList'
 import { NotePreview } from './NotePreview'
 
 type NotePreviewListProps = ComponentProps<'ul'> & {
@@ -16,7 +16,10 @@ export const NotePreviewList = ({ className, onSelect, ...props }: NotePreviewLi
   const { searchResults, selectedSearchIndex, handleSearchSelect } = useSearchResults({ onSelect })
   const cleanEmpty = useSetAtom(cleanEmptySearchesAtom)
   const refreshSearches = useSetAtom(refreshSearchesAtom)
+    const setResumeSearchTrigger = useSetAtom(resumeSearchTriggerAtom)
+  const setActiveTab = useSetAtom(activeTabAtom)
   const [refreshing, setRefreshing] = useState(false)
+    const resumingIndex = null
 
   const handleRefresh = useCallback(async () => {
     setRefreshing(true)
@@ -61,7 +64,8 @@ export const NotePreviewList = ({ className, onSelect, ...props }: NotePreviewLi
         </ul>
       ) : (
         <ul {...props} className={twMerge('flex-1 overflow-auto', className)}>
-          {searchResults.map((searchResult, index) => (
+          {searchResults.map((searchResult, index) => {
+            return (
             <NotePreview
               key={searchResult.date}
               isActive={selectedSearchIndex === index}
@@ -70,8 +74,19 @@ export const NotePreviewList = ({ className, onSelect, ...props }: NotePreviewLi
               date={searchResult.date}
               // eslint-disable-next-line @typescript-eslint/no-explicit-any
               results={searchResult.results as any}
+              status={searchResult.status}
+                pendingLinks={searchResult.pendingLinks}
+                lastPageScraped={searchResult.lastPageScraped}
+                totalPages={searchResult.totalPages}
+                fastScan={searchResult.options?.fastScan}
+                isResuming={resumingIndex === index}
+                onResume={() => {
+                  setResumeSearchTrigger(searchResult)
+                  setActiveTab('1')
+                }}
             />
-          ))}
+            )
+          })}
         </ul>
       )}
     </div>

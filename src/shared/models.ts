@@ -7,7 +7,14 @@ export type SearchResult = {
 export type Search = {
   description?: string
   date: number // Unix timestamp olarak zorunlu hale getirildi
-  results: SearchResult[] // 'search' yerine 'results' olarak adlandırıldı
+  results: SearchResult[]
+  status?: 'completed' | 'interrupted'
+  platform?: 'trendyol' | 'hepsiburada' | 'n11'
+  searchUrl?: string
+  options?: any
+  lastPageScraped?: number
+  totalPages?: number
+  pendingLinks?: string[]
 }
 
 export type SearchSummary = {
@@ -15,11 +22,6 @@ export type SearchSummary = {
   date: number // Unix timestamp
 }
 
-export type NoteInfo = {
-  title: string
-  lastEditTime: number
-}
-export type NoteContent = string
 
 export type Settings = {
   macAddress: string

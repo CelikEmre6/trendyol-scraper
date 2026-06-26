@@ -1,6 +1,6 @@
 /* eslint-disable prettier/prettier */
 import { getData, getData2 } from '@/browser/func/getData'
-import { getDataHB2 } from '@/browser/func/getDataHb'
+import { getDataHb, getDataHB2 } from '@/browser/func/getDataHb'
 import { getDataHbAxios } from '@/browser/func/getDataHbAxios'
 import { appDirectoryName, fileEncoding } from '@shared/constants'
 import { Search } from '@shared/models'
@@ -14,7 +14,7 @@ import {
 import { exec } from 'child_process'
 import { dialog } from 'electron'
 import ExcelJS from 'exceljs'
-import { outputFile, readFile, readdir, remove } from 'fs-extra'
+import { outputFile, readdir, readFile, remove } from 'fs-extra'
 import os, { homedir } from 'os'
 
 export const getRootDir = () => {
@@ -24,16 +24,89 @@ export const getRootDir = () => {
 
 
 export const getSearchResults = async (url: string, options?: any, onProgress?: (progress: any) => void) => {
-  let data = [] as any
-  const settings = await getSettingsJson()
+  let data: any
+  let platform: 'trendyol' | 'hepsiburada' = 'trendyol'
   if (url.includes('trendyol.com')) {
+    platform = 'trendyol'
     data = await getData(url, options, onProgress)
   } else {
-    if (settings.licancePlan !== 'pro') return []
+    platform = 'hepsiburada'
     console.log('Hepsiburada linki tespit edildi, veriler çekiliyor (Axios Modu)...')
     data = await getDataHbAxios(url, options, onProgress)
   }
+  if (data && typeof data === 'object' && !Array.isArray(data)) {
+    data.platform = platform
+    data.searchUrl = url
+    data.options = options
+  }
   return data
+}
+
+export const resumeSearch = async (searchData: Search, onProgress?: (progress: any) => void) => {
+  let newResults: any[] = []
+  let finalStatus = 'completed'
+  let newPendingLinks: string[] = searchData.pendingLinks ? [...searchData.pendingLinks] : []
+  let newLastPage = searchData.lastPageScraped || 0
+
+  // 1. Önce kalan sayfaları tarayıp linkleri toplayalım (sadece linkler)
+  if (
+    searchData.lastPageScraped !== undefined &&
+    searchData.totalPages !== undefined &&
+    searchData.lastPageScraped < searchData.totalPages
+  ) {
+    const options = {
+      ...searchData.options,
+      minPage: (searchData.lastPageScraped + 1).toString(),
+      maxPage: searchData.totalPages.toString(),
+      onlyLinks: true // Listeleme yap ama detaylara girme
+    }
+    let listData: any
+    if (searchData.platform === 'trendyol') {
+      listData = await getData(searchData.searchUrl!, options, onProgress)
+    } else if (searchData.platform === 'hepsiburada') {
+      listData = await getDataHb(searchData.searchUrl!, options, onProgress)
+    }
+
+    if (listData) {
+      // onlyLinks olduğunda results boş döner, pendingLinks dolar
+      newPendingLinks = newPendingLinks.concat(listData.pendingLinks || [])
+      finalStatus = listData.status // eğer sadece link toplarken iptal edildiyse
+      newLastPage = listData.lastPageScraped
+    }
+  }
+
+  // Eğer link toplarken bile iptal edildiyse, sadece o ana kadar toplananları kaydet ve çık
+  if (finalStatus === 'interrupted') {
+    searchData.status = 'interrupted'
+    searchData.pendingLinks = newPendingLinks
+    searchData.lastPageScraped = newLastPage
+    await saveSearch(searchData)
+    return searchData
+  }
+
+  // 2. Şimdi elimizdeki TÜM linklerin (eskiden kalan + yeni toplanan) detaylarını çekelim
+  if (newPendingLinks && newPendingLinks.length > 0) {
+    let detailData: any
+    if (searchData.platform === 'trendyol') {
+      detailData = await getData2(newPendingLinks, onProgress)
+    } else if (searchData.platform === 'hepsiburada') {
+      detailData = await getDataHB2(newPendingLinks, onProgress)
+    }
+
+    if (detailData) {
+      newResults = newResults.concat(detailData.results)
+      finalStatus = detailData.status
+      newPendingLinks = detailData.pendingLinks || []
+    }
+  }
+
+  searchData.results = searchData.results.concat(newResults)
+  searchData.status = finalStatus as 'completed' | 'interrupted'
+  searchData.pendingLinks = newPendingLinks
+  searchData.lastPageScraped = newLastPage
+  await saveSearch(searchData)
+
+  return searchData
 }
 
 export const getSearchResults2 = async (urls: string) => {
@@ -120,18 +193,14 @@ export const writeSettingsJson: SetSettingsJson = async (settings) => {
   return settings
 }
 
-export const saveSearch: SaveSearch = async ({ results, date, description }) => {
-  const filePath = `${getRootDir()}/${date}.json`
+export const saveSearch: SaveSearch = async (searchData) => {
+  const filePath = `${getRootDir()}/${searchData.date}.json`
 
   try {
     await outputFile(
       filePath,
       JSON.stringify(
-        {
-          results,
-          date,
-          description
-        },
+        searchData,
         null,
         2
       ),

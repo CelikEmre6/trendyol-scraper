@@ -110,3 +110,4 @@ export const updateStateAtom = atom<'idle' | 'available' | 'downloading' | 'down
 export const downloadProgressAtom = atom<{ percent: number; transferred: number; total: number; bytesPerSecond: number } | null>(null)
 
 export const activeTabAtom = atom<string>('1')
+export const resumeSearchTriggerAtom = atom<import('@shared/models').Search | null>(null)

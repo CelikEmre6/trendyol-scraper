@@ -1,17 +1,24 @@
-import { NoteContent, NoteInfo, Search, SearchResult, Settings } from './models'
+import { Search, SearchResult, Settings } from './models';
 
-export type GetNotes = () => Promise<NoteInfo[]>
-export type ReadNote = (title: NoteInfo['title']) => Promise<NoteContent>
-export type WriteNote = (title: NoteInfo['title'], content: NoteContent) => Promise<void>
-export type CreateNote = () => Promise<NoteInfo['title'] | false>
-export type DeleteNote = (title: NoteInfo['title']) => Promise<boolean>
 export type SearchOptions = { minPage?: number; maxPage?: number; fastScan?: boolean };
-export type SearchResults = (url: string, options?: SearchOptions) => Promise<SearchResult[]>
 export type GetSettingsJson = () => Promise<Settings>
 export type SetSettingsJson = (settings: Settings) => Promise<Settings>
 
 // Aramayı kaydetme işlemi için güncellenmiş tip
 export type SaveSearch = (search: Search) => Promise<void>
+
+export type ScraperResponse = {
+    results: SearchResult[]
+    status: 'completed' | 'interrupted'
+    platform?: 'trendyol' | 'hepsiburada' | 'n11'
+    searchUrl?: string
+    options?: any
+    lastPageScraped?: number
+    totalPages?: number
+    pendingLinks?: string[]
+}
+
+export type SearchResults = (url: string, options?: SearchOptions) => Promise<ScraperResponse | SearchResult[]>
 
 // Tüm aramaları alma işlemi için güncellenmiş tip
 export type GetSearch = () => Promise<Search[]>

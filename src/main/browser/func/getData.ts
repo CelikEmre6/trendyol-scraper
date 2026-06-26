@@ -39,12 +39,14 @@ async function fetchScriptContent(url: string) {
     }
 
     if (!matchingScript) {
-      return { errorReason: 'Sayfa yapısı algılanamadı (Hata Kodu: E1 - Güvenlik Duvarı)' }
+      console.log(url)
+      return {}
     }
 
     const rawJson = matchingScript.split('window["__envoy__SHARED_PROPS"]=')[1]
     if (!rawJson) {
-      return { errorReason: 'Ürün verisi okunamadı (Hata Kodu: E2 - Veri Formatı)' }
+      console.log(url)
+      return {}
     }
 
     // matchingScript artık gerekmez
@@ -53,7 +55,9 @@ async function fetchScriptContent(url: string) {
     let jsonObject: any = JSON.parse(rawJson)
 
     if (!jsonObject?.product) {
-      return { errorReason: 'Ürün detayları eksik (Hata Kodu: E3 - Boş Ürün)' }
+      console.log('No product data found in the parsed script.')
+      jsonObject = null
+      return {}
     }
 
     const product = jsonObject.product
@@ -73,8 +77,20 @@ async function fetchScriptContent(url: string) {
     // Açıklama API'sini çek, sadece result kısmını al, büyük response nesnesini serbest bırak
     let descriptions: any[] = []
     try {
+      const params: any = { channelId: 1 }
+      if (product.campaignId) params.campaignId = product.campaignId
+      if (product.merchantListing?.listingId) params.listingId = product.merchantListing.listingId
+      if (product.maxSaleLimit) params.maxSaleLimit = product.maxSaleLimit
+      if (product.merchantListing?.merchant?.name) params.merchantName = product.merchantListing.merchant.name
+
       const { data: descResponseData } = await axiosInstance.get(
-        `https://apigw.trendyol.com/discovery-pdp-websfxcomponentread-santral/${productId}`
+        `https://apigw.trendyol.com/discovery-storefront-trproductgw-service/api/component-read/component/${productId}`,
+        {
+          params,
+          headers: {
+            'x-agentname': 'web'
+          }
+        }
       )
       descriptions = descResponseData?.result?.descriptions ?? []
       // descResponseData büyük olabilir, erken serbest bırak
@@ -143,9 +159,9 @@ async function fetchScriptContent(url: string) {
     jsonObject = null
 
     return dictionary
-  } catch (error: any) {
-    const errorReason = error.response ? `Sunucu erişimi reddetti (Hata Kodu: HTTP-${error.response.status})` : 'Bağlantı kurulamadı (Hata Kodu: E4 - Ağ Bağlantısı)'
-    return { errorReason }
+  } catch (error) {
+    console.log('Error fetching or parsing data:', error)
+    return {}
   }
 }
 
@@ -183,11 +199,17 @@ export const getData = async (url: string, options?: any, onProgress?: (progress
   }
   const trial = settings.licanceType === 'trial'
   const variant = settings.variant
+  const startPage = options?.minPage ? parseInt(options.minPage) : 1
+  const endPage = options?.maxPage ? parseInt(options.maxPage) : (trial ? 1 : 250)
+  let lastPageScraped = startPage - 1
+  let listInterrupted = false
+
   try {
-    const startPage = options?.minPage ? parseInt(options.minPage) : 1
-    const endPage = options?.maxPage ? parseInt(options.maxPage) : (trial ? 1 : 250)
     for (let page = startPage; page <= endPage; page++) {
-      if (isSearchCancelled || mySearchId !== currentSearchId) break
+      if (isSearchCancelled || mySearchId !== currentSearchId) {
+        listInterrupted = true
+        break
+      }
 
       const extraParamsStr = extraQueryParams ? `&${extraQueryParams}` : ''
       const { data } = await axiosInstance.get(
@@ -251,22 +273,29 @@ export const getData = async (url: string, options?: any, onProgress?: (progress
       }
 
       if (products.length === 0 || (options?.fastScan ? storage.count >= productNumber : linkSet.size >= productNumber)) break
+      lastPageScraped = page
+
+      if (typeof onProgress === 'function') {
+        const percentVal = ((page / endPage) * 100).toFixed(0)
+        onProgress({ message: `Ürün Linkleri Toplanıyor... Sayfa ${page} - Toplanan Link: ${linkSet.size}`, percent: percentVal })
+      }
     }
   } catch (error) {
     console.error('Data fetch error:', error)
+    // Hata durumunda da kopart
   }
 
   if (options?.fastScan) {
     if (typeof onProgress === 'function') {
       onProgress({ message: '' })
     }
-    if (storage.count === 0) {
-      storage.cleanup()
-      throw new Error(
-        'Hiçbir ürün bulunamadı. Linki kontrol ediniz veya Trendyol tarafından engellenmiş olabilirsiniz.'
-      )
+    return {
+      results: storage.finalize(),
+      status: 'completed', // fastScan doesn't really pause
+      lastPageScraped: 0,
+      totalPages: 0,
+      pendingLinks: []
     }
-    return storage.finalize()
   }
 
   if (variant) {
@@ -317,9 +346,31 @@ export const getData = async (url: string, options?: any, onProgress?: (progress
   const maxFailures = 15
 
   // Fetch script content for all products
-  for (const link of uniqueLinks) {
+  let detailInterrupted = false
+
+  if (options?.onlyLinks) {
+    let expectedPages = endPage
+    if (productNumber !== Infinity) {
+      expectedPages = startPage + Math.ceil(productNumber / 24) - 1
+    }
+    const computedTotalPages = Math.max(expectedPages, lastPageScraped)
+
+    return {
+      results: [],
+      status: listInterrupted ? 'interrupted' : 'completed',
+      lastPageScraped: lastPageScraped,
+      totalPages: computedTotalPages,
+      pendingLinks: uniqueLinks
+    }
+  }
+
+  let processedCount = 0
+
+  for (let i = 0; i < uniqueLinks.length; i++) {
+    const link = uniqueLinks[i]
     if (isSearchCancelled || mySearchId !== currentSearchId) {
       console.log('Arama kullanıcı tarafından veya yeni arama başlatıldığı için iptal edildi.')
+      detailInterrupted = true
       break
     }
     const result = await fetchScriptContent(link)
@@ -328,20 +379,14 @@ export const getData = async (url: string, options?: any, onProgress?: (progress
       consecutiveFailures = 0
     } else {
       consecutiveFailures++
-      console.warn(`Ürün başarısız (${link}): ${result.errorReason || 'Bilinmeyen Hata'}`)
       if (consecutiveFailures >= maxFailures) {
-        console.warn(`Üst üste ${maxFailures} üründen veri alınamadı. İşlem durduruluyor. Son Hata: ${result.errorReason}`)
-        if (storage.count === 0) {
-          storage.cleanup()
-          throw new Error(
-            `Üst üste ${maxFailures} üründen veri alınamadı. (Sebep: ${result.errorReason || 'Bilinmeyen'}). IP adresiniz engellenmiş veya sayfa yapısı değişmiş olabilir.`
-          )
-        } else {
-          break
-        }
+        console.warn(`Üst üste ${maxFailures} üründen veri alınamadı. İşlem durduruluyor.`)
+        detailInterrupted = true
+        break
       }
     }
 
+    processedCount++
     await new Promise((resolve) => setTimeout(resolve, 50))
     const percentVal = ((counter++ / leng) * 100).toFixed(2)
 
@@ -355,9 +400,8 @@ export const getData = async (url: string, options?: any, onProgress?: (progress
       }
     }
 
-    // Sadece her 10 üründe bir veya en sonda arayüze mesaj göndererek IPC darboğazını (Crash) önle
-    if (counter % 10 === 0 || counter > leng) {
-      if (typeof onProgress === 'function') {
+    if (typeof onProgress === 'function') {
+      if (counter % 5 === 0 || counter === leng) {
         onProgress({
           percent: percentVal,
           total: leng,
@@ -368,56 +412,77 @@ export const getData = async (url: string, options?: any, onProgress?: (progress
     }
   }
 
+  const finalRemainingLinks = uniqueLinks.slice(processedCount)
+
   if (typeof onProgress === 'function') {
     onProgress({ message: '' })
   }
 
-  if (storage.count === 0) {
-    storage.cleanup()
-    throw new Error(
-      'Hiçbir ürün bulunamadı. Linki kontrol ediniz veya Trendyol tarafından engellenmiş olabilirsiniz.'
-    )
-  }
-
   // Diskten oku, geçici dosyayı sil, sonuçları döndür
-  return storage.finalize()
+  const finalStatus = (listInterrupted || detailInterrupted) ? 'interrupted' : 'completed'
+
+  let expectedPages = endPage
+  if (productNumber !== Infinity) {
+    expectedPages = startPage + Math.ceil(productNumber / 24) - 1
+  }
+  const computedTotalPages = Math.max(expectedPages, lastPageScraped)
+
+  return {
+    results: storage.finalize(),
+    status: finalStatus,
+    lastPageScraped: lastPageScraped,
+    totalPages: computedTotalPages,
+    pendingLinks: finalRemainingLinks
+  }
 }
 
-export const getData2 = async (urls: string[]) => {
+export const getData2 = async (urls: string[], onProgress?: (progress: any) => void) => {
   const mySearchId = currentSearchId
   const storage = new TempStorage('trendyol2', 10)
   let consecutiveFailures = 0
   const maxFailures = 15
+  let detailInterrupted = false
+  const remainingLinks = [...urls]
+  const totalUrls = urls.length
+  let fetchedCount = 0
 
   for (const link of urls) {
-    if (isSearchCancelled || mySearchId !== currentSearchId) break
+    if (isSearchCancelled || mySearchId !== currentSearchId) {
+      detailInterrupted = true
+      break
+    }
     const result = await fetchScriptContent(link)
     if (result.url && result.url.trim()) {
       storage.push(result)
       consecutiveFailures = 0
+      remainingLinks.shift()
     } else {
       consecutiveFailures++
-      console.warn(`Ürün başarısız (${link}): ${result.errorReason || 'Bilinmeyen Hata'}`)
       if (consecutiveFailures >= maxFailures) {
-        if (storage.count === 0) {
-          storage.cleanup()
-          throw new Error(
-            `Üst üste ${maxFailures} üründen veri alınamadı. (Sebep: ${result.errorReason || 'Bilinmeyen'}). IP adresiniz engellenmiş veya sayfa yapısı değişmiş olabilir.`
-          )
-        } else {
-          break
-        }
+        detailInterrupted = true
+        break
       }
     }
+
+    fetchedCount++
+    if (typeof onProgress === 'function') {
+      const percentVal = ((fetchedCount / totalUrls) * 100).toFixed(2)
+      if (fetchedCount % 10 === 0 || fetchedCount === totalUrls) {
+        onProgress({
+          percent: percentVal,
+          total: totalUrls,
+          success: storage.count,
+          failed: fetchedCount - storage.count
+        })
+      }
+    }
+
     await new Promise((resolve) => setTimeout(resolve, 100))
   }
 
-  if (storage.count === 0) {
-    storage.cleanup()
-    throw new Error(
-      'Hiçbir ürün bulunamadı. Linkleri kontrol ediniz veya Trendyol tarafından engellenmiş olabilirsiniz.'
-    )
+  return {
+    results: storage.finalize(),
+    status: detailInterrupted ? 'interrupted' : 'completed',
+    pendingLinks: remainingLinks
   }
-
-  return storage.finalize()
 }

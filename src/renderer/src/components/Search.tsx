@@ -1,4 +1,4 @@
-import { activeTabAtom, downloadProgressAtom, saveSearchResultsAtom, updateAvailableAtom, updateStateAtom } from '@renderer/store'
+import { activeTabAtom, downloadProgressAtom, refreshSearchesAtom, resumeSearchTriggerAtom, saveSearchResultsAtom, updateAvailableAtom, updateStateAtom } from '@renderer/store'
 import { appVersion } from '@shared/constants'
 import { message, Progress, Tooltip } from 'antd'
 import { useAtom, useSetAtom } from 'jotai'
@@ -18,6 +18,9 @@ export const Search = () => {
   const [fastScan, setFastScan] = useState(false)
   const setSearchResults = useSetAtom(saveSearchResultsAtom)
   const setActiveTab = useSetAtom(activeTabAtom)
+  const [resumeSearchTrigger, setResumeSearchTrigger] = useAtom(resumeSearchTriggerAtom)
+
+    const refreshSearches = useSetAtom(refreshSearchesAtom)
 
   useEffect(() => {
     let interval: NodeJS.Timeout
@@ -65,6 +68,38 @@ export const Search = () => {
       if (cleanup) cleanup()
     }
   }, [])
+
+  useEffect(() => {
+    if (resumeSearchTrigger) {
+      const runResume = async () => {
+        setLoading(true)
+        setProgress(0)
+        setProgressStats({ percent: 0, total: 0, success: 0, failed: 0 })
+        setUrl(resumeSearchTrigger.searchUrl || 'Devam Ediliyor...')
+        try {
+          const updatedSearch = await window.context.resumeSearch(resumeSearchTrigger)
+          
+          // resumeSearch zaten diske kaydettiği için tekrar setSearchResults (ekleme) yapmamıza gerek yok, sadece listeyi yenileyelim.
+          await refreshSearches()
+          refresh()
+          
+          if (updatedSearch.status === 'interrupted') {
+            message.warning('İşlem durduruldu/kesildi. Alınabilen veriler Geçmişe kaydedildi.')
+          } else {
+            message.success('Arama başarıyla tamamlandı.')
+          }
+          setActiveTab('2')
+        } catch (error: any) {
+          console.error(error)
+          message.error(error.message || 'Devam ederken hata oluştu.')
+        } finally {
+          setLoading(false)
+          setResumeSearchTrigger(null)
+        }
+      }
+      runResume()
+    }
+  }, [resumeSearchTrigger, setActiveTab, refreshSearches, setResumeSearchTrigger])
 
   // Eski message.destroy hook'u kaldırıldı
 
@@ -370,16 +405,30 @@ export const Search = () => {
               }
 
               const data = await window.context.getSearchResults(url!, options)
+              const isArray = Array.isArray(data)
+              const resultsArray = isArray ? data : (data.results || [])
               const newSearch = {
-                results: data.map((item) => ({ ...item })),
+                results: resultsArray.map((item) => ({ ...item })),
                 date: new Date().getTime(),
                 description: url.includes('trendyol.com/')
                   ? url.slice(url.indexOf('trendyol.com/') + 13)
-                  : url.slice(url.indexOf('hepsiburada.com/') + 16)
+                  : url.slice(url.indexOf('hepsiburada.com/') + 16),
+                fastScan: fastScan,
+                status: isArray ? 'completed' : (data.status || 'completed'),
+                platform: isArray ? undefined : data.platform,
+                searchUrl: isArray ? undefined : data.searchUrl,
+                options: isArray ? undefined : data.options,
+                lastPageScraped: isArray ? undefined : data.lastPageScraped,
+                totalPages: isArray ? undefined : data.totalPages,
+                pendingLinks: isArray ? [] : (data.pendingLinks || [])
               }
               await setSearchResults(newSearch)
               refresh()
-              message.success('Veriler Alındı')
+              if (newSearch.status === 'interrupted') {
+                message.warning('İşlem durduruldu/kesildi. Alınabilen veriler Geçmişe kaydedildi.')
+              } else {
+                message.success('Veriler Alındı')
+              }
               setActiveTab('2')
             } catch (error: any) {
               console.error(error)
